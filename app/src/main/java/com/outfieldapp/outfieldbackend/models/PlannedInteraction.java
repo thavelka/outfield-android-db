@@ -53,8 +53,34 @@ public class PlannedInteraction extends Model {
     public void setContactId(long id) { contactIds.set(0, id); }
     public void setUser(User user) { this.user = user; }
 
+    public boolean save() {
+        // Insert interaction
+        insert();
+
+        // Insert user
+        if (user != null) user.save();
+
+        // Insert contact
+        if (getContact() != null) {
+            getContact().save();
+        }
+
+        // Insert comments
+        for (Comment comment : comments) {
+            comment.setInteractionId(interactionId);
+            comment.save();
+        }
+
+        return true;
+    }
+
     @Override
     boolean insert() {
+        if (contactIds.isEmpty()) {
+            Log.e(TAG, "Object has no parent");
+            return false;
+        }
+
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
@@ -84,7 +110,6 @@ public class PlannedInteraction extends Model {
     }
 
     public boolean update() {
-
         if (rowId <= 0) {
             Log.e(TAG, "Error: You must insert before updating");
             return false;

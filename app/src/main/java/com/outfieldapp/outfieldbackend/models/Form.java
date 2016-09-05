@@ -53,6 +53,18 @@ public class Form extends Model {
         return null;
     }
 
+    public boolean save() {
+        // Insert form values
+        insert();
+
+        // Insert fields
+        for (FormField field : formFields) {
+            field.insert();
+        }
+
+        return true;
+    }
+
     @Override
     boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();

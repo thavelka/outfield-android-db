@@ -65,6 +65,19 @@ public class User extends Model {
         return null;
     }
 
+    public boolean save() {
+        // Insert user values
+        insert();
+
+        // Insert image values
+        if (image != null) {
+            image.setUserId(userId);
+            image.insert();
+        }
+
+        return true;
+    }
+
     @Override
     boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();

@@ -42,8 +42,25 @@ public class Comment extends Model {
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
     public void setUser(User user) { this.user = user; }
 
+
+    public boolean save() {
+        // Insert comment values
+        insert();
+
+        // Insert user values
+        if (user != null) user.save();
+
+        return true;
+    }
+
     @Override
     boolean insert() {
+
+        if (interactionId == 0) {
+            Log.e(TAG, "Object has no parent");
+            return false;
+        }
+
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {

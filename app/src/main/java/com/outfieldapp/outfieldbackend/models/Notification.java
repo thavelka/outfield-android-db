@@ -26,6 +26,16 @@ public class Notification extends Model {
     public Comment getComment() { return notificationDetails.comment; }
     public Interaction getInteraction() { return notificationDetails.interaction; }
 
+    public boolean save() {
+        // Insert notification
+        insert();
+
+        // Insert interaction
+        if (getInteraction() != null) getInteraction().save();
+
+        return true;
+    }
+
     @Override
     boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();

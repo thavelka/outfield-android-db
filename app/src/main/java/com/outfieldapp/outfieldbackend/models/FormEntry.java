@@ -38,6 +38,11 @@ public class FormEntry extends Model {
 
     @Override
     boolean insert() {
+        if (interactionId == 0 || formId == 0) {
+            Log.e(TAG, "Object has no parent");
+            return false;
+        }
+
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {

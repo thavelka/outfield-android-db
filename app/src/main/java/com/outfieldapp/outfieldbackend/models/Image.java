@@ -45,7 +45,6 @@ public class Image extends Model {
 
     @Override
     boolean insert() {
-
         if (contactId == 0 && interactionId == 0 && userId == 0) {
             Log.e(TAG, "Object has no parent");
             return false;
@@ -65,7 +64,6 @@ public class Image extends Model {
     }
 
     public boolean update() {
-
         if (rowId <= 0) {
             Log.e(TAG, "Error: You must insert before updating");
             return false;

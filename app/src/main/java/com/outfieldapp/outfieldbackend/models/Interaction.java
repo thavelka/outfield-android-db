@@ -88,15 +88,59 @@ public class Interaction extends Model {
     public void setImages(List<Image> images) { this.images = images; }
 
 
+    public boolean save() {
+        // Insert interaction
+        insert();
+
+        // Insert user
+        if (user != null) user.save();
+
+        // Insert contact
+        if (getContact() != null) {
+            getContact().save();
+        }
+
+        // Insert forms
+        for (Form form : forms) {
+            form.save();
+        }
+
+        // Insert form entries
+        for (FormEntryGroup group : formEntryGroups) {
+            for (FormEntry entry : group.getFormEntries()) {
+                entry.insert();
+            }
+        }
+
+        // Insert comments
+        for (Comment comment : comments) {
+            comment.setInteractionId(interactionId);
+            comment.save();
+        }
+
+        // Insert images
+        for (Image image : images) {
+            image.setInteractionId(interactionId);
+            image.insert();
+        }
+
+        return true;
+    }
+
     @Override
     boolean insert() {
+        if (contactIds.isEmpty()) {
+            Log.e(TAG, "Object has no parent");
+            return false;
+        }
+
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
             // Insert values, get row id
             rowId = db.insertOrThrow(OutfieldContract.Interaction.TABLE_NAME, null, getContentValues());
 
-            // If contact does not have an id, generate negative id from row id and update
+            // If interaction does not have an id, generate negative id from row id and update
             if (interactionId == 0) {
                 interactionId = rowId * -1;
                 ContentValues values = new ContentValues();
