@@ -342,24 +342,4 @@ public class Contact extends Model {
             return name().toLowerCase();
         }
     }
-
-    @Override
-    public String toString() {
-        return "Contact{" +
-                "addresses=" + addresses +
-                ", rowId=" + rowId +
-                ", contactId=" + contactId +
-                ", contactType='" + contactType + '\'' +
-                ", name='" + name + '\'' +
-                ", title='" + title + '\'' +
-                ", company='" + company + '\'' +
-                ", website='" + website + '\'' +
-                ", favored=" + favored +
-                ", dirty=" + dirty +
-                ", destroy=" + destroy +
-                ", emails=" + emails +
-                ", phones=" + phones +
-                ", images=" + images +
-                '}';
-    }
 }
