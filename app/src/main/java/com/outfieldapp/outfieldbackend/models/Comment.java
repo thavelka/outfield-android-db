@@ -43,6 +43,29 @@ public class Comment extends Model {
     public void setUser(User user) { this.user = user; }
 
 
+    public static Comment getCommentWithId(long commentId) {
+        if (commentId != 0) {
+            SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+            Cursor commentCursor = db.query(
+                    OutfieldContract.Comment.TABLE_NAME,
+                    null,
+                    OutfieldContract.Comment.COMMENT_ID + "=?",
+                    new String[]{String.valueOf(commentId)},
+                    null,
+                    null,
+                    "LIMIT 1"
+            );
+
+            if (commentCursor != null && commentCursor.moveToFirst()) {
+                Comment comment = new Comment(commentCursor);
+                commentCursor.close();
+                return comment;
+            }
+        }
+
+        return null;
+    }
+
     public boolean save() {
         // Insert comment values
         insert();

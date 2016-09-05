@@ -88,6 +88,29 @@ public class Interaction extends Model {
     public void setImages(List<Image> images) { this.images = images; }
 
 
+    public static Interaction getInteractionWithId(long interactionId) {
+        if (interactionId != 0) {
+            SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+            Cursor interactionCursor = db.query(
+                    OutfieldContract.Interaction.TABLE_NAME,
+                    null,
+                    OutfieldContract.Interaction.INTERACTION_ID + "=?",
+                    new String[]{String.valueOf(interactionId)},
+                    null,
+                    null,
+                    "LIMIT 1"
+            );
+
+            if (interactionCursor != null && interactionCursor.moveToFirst()) {
+                Interaction interaction = new Interaction(interactionCursor);
+                interactionCursor.close();
+                return interaction;
+            }
+        }
+
+        return null;
+    }
+
     public boolean save() {
         // Insert interaction
         insert();

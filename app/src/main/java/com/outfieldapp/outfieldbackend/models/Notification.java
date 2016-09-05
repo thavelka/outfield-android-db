@@ -65,45 +65,14 @@ public class Notification extends Model {
             notificationId = cursor.getLong(notificationIdIndex);
             createdAt = cursor.getString(createdAtIndex);
 
-            SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
-
             // Load comment
             long commentId = cursor.getLong(commentIdIndex);
-            if (commentId != 0) {
-                Cursor commentCursor = db.query(
-                        OutfieldContract.Comment.TABLE_NAME,
-                        null,
-                        OutfieldContract.Comment.COMMENT_ID + "=?",
-                        new String[]{String.valueOf(commentId)},
-                        null,
-                        null,
-                        "LIMIT 1"
-                );
-
-                if (commentCursor != null && commentCursor.moveToFirst()) {
-                    notificationDetails.comment = new Comment(commentCursor);
-                    commentCursor.close();
-                }
-            }
+            notificationDetails.comment = Comment.getCommentWithId(commentId);
 
             // Load interaction
             long interactionId = cursor.getLong(interactionIdIndex);
-            if (interactionId != 0) {
-                Cursor interactionCursor = db.query(
-                        OutfieldContract.Interaction.TABLE_NAME,
-                        null,
-                        OutfieldContract.Interaction.INTERACTION_ID + "=?",
-                        new String[]{String.valueOf(interactionId)},
-                        null,
-                        null,
-                        "LIMIT 1"
-                );
+            notificationDetails.interaction = Interaction.getInteractionWithId(interactionId);
 
-                if (interactionCursor != null && interactionCursor.moveToFirst()) {
-                    notificationDetails.interaction = new Interaction(interactionCursor);
-                    interactionCursor.close();
-                }
-            }
         } catch (Exception e) {
             Log.e(TAG, "Error during loadFromCursor", e);
         }
