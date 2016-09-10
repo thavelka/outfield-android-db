@@ -1,10 +1,8 @@
 package com.outfieldapp.outfieldbackend;
 
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 import com.outfieldapp.outfieldbackend.models.Address;
@@ -22,14 +20,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Contact myContact = getContact(33333);
-        myContact.setId(44444);
-        myContact.update();
+        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+        db.delete(OutfieldContract.Contact.TABLE_NAME, null, null);
+
+        Contact contact = getSampleContact();
+        contact.setDirty(true);
+        contact.setFavored(true);
+        contact.save();
+
+        Contact retrievedContact = Contact.getContactWithId(contact.getId());
+        return;
     }
 
-    public void makeContact() {
-        // Build contact
+    public Contact getSampleContact() {
         Contact contact = new Contact();
+        contact.setContactType(Contact.Type.PERSON);
         contact.setName("Tim Havelka");
         contact.setTitle("Android Developer");
         contact.setCompany("Outfield");
@@ -81,53 +86,6 @@ public class MainActivity extends AppCompatActivity {
         contact.setEmails(emails);
         contact.setPhones(phones);
 
-        // Insert contact and submodels
-        contact.setId(33333);
-        contact.save();
-    }
-
-    public void makeInteraction(long contactId) {
-    }
-
-    public Contact getContact(long id) {
-        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
-        Contact myContact = new Contact();
-
-        // Retrieve contact by ID
-        Cursor cursor = db.query(
-                OutfieldContract.Contact.TABLE_NAME,
-                null,
-                OutfieldContract.Contact.CONTACT_ID + "=?",
-                new String[]{String.valueOf(id)},
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            myContact = new Contact(cursor);
-            cursor.close();
-        }
-
-        return myContact;
-    }
-
-    public void printContacts() {
-        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
-
-        // Retrieve contact by ID
-        Cursor cursor = db.query(
-                OutfieldContract.Contact.TABLE_NAME,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        while (cursor != null && cursor.moveToNext()) {
-            Log.d("MainActivity", new Contact(cursor).toString());
-        }
+        return contact;
     }
 }

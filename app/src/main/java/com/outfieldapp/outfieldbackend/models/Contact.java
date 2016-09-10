@@ -3,6 +3,7 @@ package com.outfieldapp.outfieldbackend.models;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.OutfieldApp;
@@ -38,7 +39,6 @@ public class Contact extends Model {
 
     /* Getters */
     public long getId() { return contactId; }
-    public Type getContactType() { return Type.valueOf(contactType.toUpperCase()); }
     public String getName() { return name; }
     public String getTitle() { return title; }
     public String getCompany() { return company; }
@@ -50,6 +50,13 @@ public class Contact extends Model {
     public List<Email> getEmails() { return emails; }
     public List<Phone> getPhones() { return phones; }
     public List<Image> getImages() { return images; }
+
+    public Type getContactType() {
+        if (!TextUtils.isEmpty(contactType)) {
+            return Type.valueOf(contactType.toUpperCase());
+        }
+        return null;
+    }
 
     /* Setters */
     public void setId(long id) { contactId = id; }
@@ -77,7 +84,8 @@ public class Contact extends Model {
                     new String[]{String.valueOf(contactId)},
                     null,
                     null,
-                    "LIMIT 1"
+//                    "LIMIT 1"
+                    null
             );
 
             if (contactCursor != null && contactCursor.moveToFirst()) {
@@ -132,6 +140,12 @@ public class Contact extends Model {
 
     @Override
     boolean insert() {
+
+        if (getContactType() == null) {
+            Log.e(TAG, "Contact must have contact type");
+            return false;
+        }
+
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
