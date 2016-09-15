@@ -3,6 +3,7 @@ package com.outfieldapp.outfieldbackend;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 import com.outfieldapp.outfieldbackend.models.Address;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +32,12 @@ public class MainActivity extends AppCompatActivity {
         contact.save();
 
         Contact retrievedContact = Contact.getContactWithId(contact.getId());
-        return;
+        if (contact != null) {
+            Log.d(TAG, "Retrieved contact with id: " + retrievedContact.getId());
+            Log.d(TAG, "Address count: " + retrievedContact.getAddresses().size());
+            Log.d(TAG, "Phone count: " + retrievedContact.getPhones().size());
+            Log.d(TAG, "Email count: " + retrievedContact.getEmails().size());
+        }
     }
 
     public Contact getSampleContact() {

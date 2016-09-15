@@ -14,7 +14,7 @@ import java.util.List;
 
 public class Contact extends Model {
 
-    public static final String TAG = "Contact";
+    public static final String TAG = Contact.class.getSimpleName();
 
     private long rowId;
     private long contactId;
@@ -84,8 +84,8 @@ public class Contact extends Model {
                     new String[]{String.valueOf(contactId)},
                     null,
                     null,
-//                    "LIMIT 1"
-                    null
+                    null,
+                    "1"
             );
 
             if (contactCursor != null && contactCursor.moveToFirst()) {

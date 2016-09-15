@@ -10,7 +10,7 @@ import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class User extends Model {
 
-    public static final String TAG = "User";
+    public static final String TAG = User.class.getSimpleName();
 
     private long rowId;
     private long userId;

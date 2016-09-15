@@ -10,7 +10,7 @@ import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Email extends Model {
 
-    public static final String TAG = "Email";
+    public static final String TAG = Email.class.getSimpleName();
 
     private long rowId;
     private long emailId;
@@ -80,10 +80,6 @@ public class Email extends Model {
         );
         db.endTransaction();
         return rows > 0;
-    }
-
-    public boolean insertOrUpdate() {
-        return (rowId > 0) ? update() : insert();
     }
 
     @Override

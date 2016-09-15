@@ -53,7 +53,8 @@ public class Comment extends Model {
                     new String[]{String.valueOf(commentId)},
                     null,
                     null,
-                    "LIMIT 1"
+                    null,
+                    "1"
             );
 
             if (commentCursor != null && commentCursor.moveToFirst()) {

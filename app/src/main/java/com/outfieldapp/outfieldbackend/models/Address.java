@@ -11,7 +11,7 @@ import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Address extends Model {
 
-    public static final String TAG = "Address";
+    public static final String TAG = Address.class.getSimpleName();
 
     private long rowId;
     private long addressId;
@@ -123,10 +123,6 @@ public class Address extends Model {
         );
         db.endTransaction();
         return rows > 0;
-    }
-
-    public boolean insertOrUpdate() {
-        return (rowId > 0) ? update() : insert();
     }
 
     @Override

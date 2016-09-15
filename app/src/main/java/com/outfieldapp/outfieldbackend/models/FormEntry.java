@@ -10,7 +10,7 @@ import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class FormEntry extends Model {
 
-    public static final String TAG = "FormEntry";
+    public static final String TAG = FormEntry.class.getSimpleName();
 
     private long rowId;
     private long interactionId;

@@ -14,7 +14,7 @@ import java.util.Collections;
 
 public class FormField extends Model {
 
-    public static final String TAG = "FormField";
+    public static final String TAG = FormField.class.getSimpleName();
 
     private long rowId;
     private long formFieldId;

@@ -41,7 +41,9 @@ public class Interaction extends Model {
     List<Image> images = new ArrayList<>();
 
     public Interaction() {}
-    public Interaction(Cursor cursor) { if (cursor != null) loadFromCursor(cursor); }
+    public Interaction(Cursor cursor) {
+        if (cursor != null) loadFromCursor(cursor);
+    }
 
     /* Getters */
     public long getId() { return interactionId; }
@@ -98,7 +100,8 @@ public class Interaction extends Model {
                     new String[]{String.valueOf(interactionId)},
                     null,
                     null,
-                    "LIMIT 1"
+                    null,
+                    "1"
             );
 
             if (interactionCursor != null && interactionCursor.moveToFirst()) {

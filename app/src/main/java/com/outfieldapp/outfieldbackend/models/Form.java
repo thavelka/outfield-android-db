@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Form extends Model {
 
-    public static final String TAG = "Form";
+    public static final String TAG = Form.class.getSimpleName();
 
     private long rowId;
     private long formId;
@@ -40,7 +40,8 @@ public class Form extends Model {
                     new String[]{String.valueOf(formId)},
                     null,
                     null,
-                    "LIMIT 1"
+                    null,
+                    "1"
             );
 
             if (formCursor != null && formCursor.moveToFirst()) {

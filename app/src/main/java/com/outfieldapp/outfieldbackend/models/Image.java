@@ -10,7 +10,7 @@ import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Image extends Model {
 
-    public static final String TAG = "Image";
+    public static final String TAG = Image.class.getSimpleName();
 
     private long rowId;
     private long imageId;
@@ -80,10 +80,6 @@ public class Image extends Model {
         );
         db.endTransaction();
         return rows > 0;
-    }
-
-    public boolean insertOrUpdate() {
-        return (rowId > 0) ? update() : insert();
     }
 
     @Override

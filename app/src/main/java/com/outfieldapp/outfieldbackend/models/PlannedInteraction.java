@@ -30,6 +30,11 @@ public class PlannedInteraction extends Model {
     List<Long> contactIds = new ArrayList<>();
     List<Comment> comments = new ArrayList<>();
 
+    public PlannedInteraction() {}
+    public PlannedInteraction(Cursor cursor) {
+        if (cursor != null) loadFromCursor(cursor);
+    }
+
     /* Getters */
     public long getId() { return interactionId; }
     public Type getInteractionType() { return Type.valueOf(interactionType.toUpperCase()); }
@@ -52,6 +57,30 @@ public class PlannedInteraction extends Model {
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
     public void setContactId(long id) { contactIds.set(0, id); }
     public void setUser(User user) { this.user = user; }
+
+    public static PlannedInteraction getPlannedInteractionWithId(long interactionId) {
+        if (interactionId != 0) {
+            SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+            Cursor interactionCursor = db.query(
+                    OutfieldContract.PlannedInteraction.TABLE_NAME,
+                    null,
+                    OutfieldContract.PlannedInteraction.INTERACTION_ID + "=?",
+                    new String[]{String.valueOf(interactionId)},
+                    null,
+                    null,
+                    null,
+                    "1"
+            );
+
+            if (interactionCursor != null && interactionCursor.moveToFirst()) {
+                PlannedInteraction interaction = new PlannedInteraction(interactionCursor);
+                interactionCursor.close();
+                return interaction;
+            }
+        }
+
+        return null;
+    }
 
     public boolean save() {
         // Insert interaction
