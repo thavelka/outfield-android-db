@@ -30,6 +30,12 @@ public class Form extends Model {
     public String getTitle() { return title; }
     public List<FormField> getFormFields() { return formFields; }
 
+    /**
+     * Searches Forms database table for a row with matching {@link #formId} and uses
+     * {@link #loadFromCursor(Cursor)} to create a {@link Form} object from that row.
+     * @param formId The form's API id ({@link #formId}).
+     * @return A completed {@link Form} object or null if row could not be found.
+     */
     public static Form getFormWithId(long formId) {
         if (formId != 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -54,6 +60,12 @@ public class Form extends Model {
         return null;
     }
 
+    /**
+     * Calls {@link #insert()} method for this Form object and all submodels. If a
+     * Form with the same {@link #formId} already exists in the database, that
+     * Form and its submodels will be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert form values
         insert();

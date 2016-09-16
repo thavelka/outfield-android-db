@@ -26,6 +26,12 @@ public class Notification extends Model {
     public Comment getComment() { return notificationDetails.comment; }
     public Interaction getInteraction() { return notificationDetails.interaction; }
 
+    /**
+     * Calls {@link #insert()} method for this Notification object and all submodels. If a
+     * Notification with the same {@link #notificationId} already exists in the database, that
+     * Notification and its submodels will be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert notification
         insert();

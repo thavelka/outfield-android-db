@@ -42,7 +42,12 @@ public class Comment extends Model {
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
     public void setUser(User user) { this.user = user; }
 
-
+    /**
+     * Searches Comments database table for a row with matching {@link #commentId} and uses
+     * {@link #loadFromCursor(Cursor)} to create a {@link Comment} object from that row.
+     * @param commentId The Comment's API id ({@link #commentId}).
+     * @return A completed {@link Comment} object or null if row could not be found.
+     */
     public static Comment getCommentWithId(long commentId) {
         if (commentId != 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -67,6 +72,12 @@ public class Comment extends Model {
         return null;
     }
 
+    /**
+     * Calls {@link #insert()} method for this Comment object and all submodels. If a
+     * Comment with the same {@link #commentId} already exists in the database, that
+     * Comment and its submodels will be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert comment values
         insert();

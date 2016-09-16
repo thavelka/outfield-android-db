@@ -42,6 +42,12 @@ public class User extends Model {
     /* Setters */
     public void setImage(Image image) { this.image = image; }
 
+    /**
+     * Searches Users database table for a row with matching {@link #userId} and uses
+     * {@link #loadFromCursor(Cursor)} to create a {@link User} object from that row.
+     * @param userId The user's API id ({@link #userId}).
+     * @return A completed {@link User} object or null if row could not be found.
+     */
     public static User getUserWithId(long userId) {
         if (userId > 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -65,6 +71,14 @@ public class User extends Model {
         return null;
     }
 
+    /* Database Access */
+
+    /**
+     * Calls {@link #insert()} method for this user and all submodels. If a user with the
+     * same {@link #userId} already exists in the database, that user and its submodels will
+     * be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert user values
         insert();

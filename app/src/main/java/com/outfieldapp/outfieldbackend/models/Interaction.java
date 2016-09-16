@@ -89,7 +89,12 @@ public class Interaction extends Model {
     public void setComments(List<Comment> comments) { this.comments = comments; }
     public void setImages(List<Image> images) { this.images = images; }
 
-
+    /**
+     * Searches Interactions database table for a row with matching {@link #interactionId} and uses
+     * {@link #loadFromCursor(Cursor)} to create an {@link Interaction} object from that row.
+     * @param interactionId The interaction's API id ({@link #interactionId}).
+     * @return A completed {@link Interaction} object or null if row could not be found.
+     */
     public static Interaction getInteractionWithId(long interactionId) {
         if (interactionId != 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -114,6 +119,12 @@ public class Interaction extends Model {
         return null;
     }
 
+    /**
+     * Calls {@link #insert()} method for this Interaction object and all submodels. If an
+     * Interaction with the same {@link #interactionId} already exists in the database, that
+     * Interaction and its submodels will be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert interaction
         insert();

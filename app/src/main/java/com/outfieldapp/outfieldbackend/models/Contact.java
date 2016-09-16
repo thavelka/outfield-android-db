@@ -32,7 +32,6 @@ public class Contact extends Model {
     private List<Image> images = new ArrayList<>();
 
     public Contact() {}
-
     public Contact(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
     }
@@ -73,7 +72,12 @@ public class Contact extends Model {
     public void setPhones(List<Phone> phones) { this.phones = phones; }
     public void setImages(List<Image> images) { this.images = images; }
 
-
+    /**
+     * Searches Contacts database table for a row with matching {@link #contactId} and uses
+     * {@link #loadFromCursor(Cursor)} to create a {@link Contact} object from that row.
+     * @param contactId The contact's API id ({@link #contactId}).
+     * @return A completed {@link Contact} object or null if row could not be found.
+     */
     public static Contact getContactWithId(long contactId) {
         if (contactId != 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -98,6 +102,12 @@ public class Contact extends Model {
         return null;
     }
 
+    /**
+     * Calls {@link #insert()} method for this Contact object and all submodels. If a contact with the
+     * same {@link #contactId} already exists in the database, that contact and its submodels will
+     * be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
 
         // Insert contact values

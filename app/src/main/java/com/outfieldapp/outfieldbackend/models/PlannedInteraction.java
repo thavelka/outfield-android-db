@@ -58,6 +58,13 @@ public class PlannedInteraction extends Model {
     public void setContactId(long id) { contactIds.set(0, id); }
     public void setUser(User user) { this.user = user; }
 
+    /**
+     * Searches PlannedInteractions database table for a row with matching {@link #interactionId}
+     * and uses {@link #loadFromCursor(Cursor)} to create a {@link PlannedInteraction} object from
+     * that row.
+     * @param interactionId The interaction's API id ({@link #interactionId}).
+     * @return A completed {@link PlannedInteraction} object or null if row could not be found.
+     */
     public static PlannedInteraction getPlannedInteractionWithId(long interactionId) {
         if (interactionId != 0) {
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -82,6 +89,12 @@ public class PlannedInteraction extends Model {
         return null;
     }
 
+    /**
+     * Calls {@link #insert()} method for this PlannedInteraction object and all submodels. If a
+     * PlannedInteraction with the same {@link #interactionId} already exists in the database, that
+     * PlannedInteraction and its submodels will be deleted and replaced.
+     * @return True if save was successful.
+     */
     public boolean save() {
         // Insert interaction
         insert();
