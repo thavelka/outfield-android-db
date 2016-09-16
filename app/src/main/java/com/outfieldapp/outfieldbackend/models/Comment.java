@@ -89,7 +89,7 @@ public class Comment extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
 
         if (interactionId == 0) {
             Log.e(TAG, "Object has no parent");
@@ -110,7 +110,7 @@ public class Comment extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Comment._ID);
             int commentIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Comment.COMMENT_ID);
@@ -154,7 +154,7 @@ public class Comment extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (commentId != 0) values.put(OutfieldContract.Comment.COMMENT_ID, commentId);
         if (interactionId != 0) values.put(OutfieldContract.Comment.INTERACTION_ID, interactionId);

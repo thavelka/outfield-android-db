@@ -42,7 +42,7 @@ public class Email extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
 
         if (contactId == 0) {
             Log.e(TAG, "Object has no parent");
@@ -62,28 +62,8 @@ public class Email extends Model {
         return rowId >= 0;
     }
 
-    public boolean update() {
-
-        if (rowId <= 0) {
-            Log.e(TAG, "Error: You must insert before updating");
-            return false;
-        }
-
-        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
-
-        db.beginTransaction();
-        int rows = db.update(
-                OutfieldContract.Email.TABLE_NAME,
-                getContentValues(),
-                OutfieldContract.Email._ID + "=?",
-                new String[]{String.valueOf(rowId)}
-        );
-        db.endTransaction();
-        return rows > 0;
-    }
-
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Email._ID);
             int emailIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Email.EMAIL_ID);
@@ -104,7 +84,7 @@ public class Email extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (emailId != 0) values.put(OutfieldContract.Email.EMAIL_ID, emailId);
         if (contactId != 0) values.put(OutfieldContract.Email.CONTACT_ID, contactId);

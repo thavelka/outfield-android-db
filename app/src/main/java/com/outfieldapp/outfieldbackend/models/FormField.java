@@ -47,7 +47,7 @@ public class FormField extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
 
         if (formId == 0) {
             Log.e(TAG, "Object has no parent");
@@ -68,7 +68,7 @@ public class FormField extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.FormField._ID);
             int fieldIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.FormField.FORM_FIELD_ID);
@@ -97,7 +97,7 @@ public class FormField extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (formFieldId != 0) values.put(OutfieldContract.FormField.FORM_FIELD_ID, formFieldId);
         if (formId != 0) values.put(OutfieldContract.FormField.FORM_ID, formId);

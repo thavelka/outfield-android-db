@@ -117,7 +117,7 @@ public class PlannedInteraction extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         if (contactIds.isEmpty()) {
             Log.e(TAG, "Object has no parent");
             return false;
@@ -170,7 +170,7 @@ public class PlannedInteraction extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.PlannedInteraction._ID);
             int interactionIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.PlannedInteraction.INTERACTION_ID);
@@ -234,7 +234,7 @@ public class PlannedInteraction extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
 
         // Put interaction values

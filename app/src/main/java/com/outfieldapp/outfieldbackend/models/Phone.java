@@ -42,7 +42,7 @@ public class Phone extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
 
         if (contactId == 0) {
             Log.e(TAG, "Object has no parent");
@@ -83,7 +83,7 @@ public class Phone extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Phone._ID);
             int phoneIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Phone.PHONE_ID);
@@ -104,7 +104,7 @@ public class Phone extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (phoneId != 0) values.put(OutfieldContract.Phone.PHONE_ID, phoneId);
         if (contactId != 0) values.put(OutfieldContract.Phone.CONTACT_ID, contactId);

@@ -79,7 +79,7 @@ public class Form extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
@@ -94,7 +94,7 @@ public class Form extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Form._ID);
             int formIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Form.FORM_ID);
@@ -127,7 +127,7 @@ public class Form extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (formId != 0) values.put(OutfieldContract.Form.FORM_ID, formId);
         values.put(OutfieldContract.Form.TITLE, title);

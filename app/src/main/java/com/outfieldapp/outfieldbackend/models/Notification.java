@@ -43,7 +43,7 @@ public class Notification extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
@@ -58,7 +58,7 @@ public class Notification extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             // Load notification values
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Notification._ID);
@@ -85,7 +85,7 @@ public class Notification extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         // Put notification values
         if (notificationId != 0) values.put(OutfieldContract.Notification.NOTIFICATION_ID, notificationId);

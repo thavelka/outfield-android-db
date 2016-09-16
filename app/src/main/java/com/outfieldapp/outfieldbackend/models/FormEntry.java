@@ -37,7 +37,7 @@ public class FormEntry extends Model {
 
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         if (interactionId == 0 || formId == 0) {
             Log.e(TAG, "Object has no parent");
             return false;
@@ -57,7 +57,7 @@ public class FormEntry extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.FormEntry._ID);
             int interactionIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.FormEntry.INTERACTION_ID);
@@ -76,7 +76,7 @@ public class FormEntry extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (interactionId != 0) values.put(OutfieldContract.FormEntry.INTERACTION_ID, interactionId);
         if (formFieldId != 0) values.put(OutfieldContract.FormEntry.FORM_FIELD_ID, formFieldId);

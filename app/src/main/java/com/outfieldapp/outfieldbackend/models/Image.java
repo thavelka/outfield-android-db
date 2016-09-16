@@ -44,7 +44,7 @@ public class Image extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         if (contactId == 0 && interactionId == 0 && userId == 0) {
             Log.e(TAG, "Object has no parent");
             return false;
@@ -83,7 +83,7 @@ public class Image extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Image._ID);
             int imageIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Image.IMAGE_ID);
@@ -112,7 +112,7 @@ public class Image extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (imageId != 0) values.put(OutfieldContract.Image.IMAGE_ID, imageId);
         if (contactId != 0) values.put(OutfieldContract.Image.CONTACT_ID, contactId);

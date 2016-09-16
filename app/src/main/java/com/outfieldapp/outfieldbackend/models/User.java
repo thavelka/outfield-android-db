@@ -93,7 +93,7 @@ public class User extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         db.beginTransaction();
         try {
@@ -109,7 +109,7 @@ public class User extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.User._ID);
             int userIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.User.USER_ID);
@@ -147,7 +147,7 @@ public class User extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
         if (userId != 0) values.put(OutfieldContract.User.USER_ID, userId);
         values.put(OutfieldContract.User.NAME, name);

@@ -149,7 +149,7 @@ public class Contact extends Model {
     }
 
     @Override
-    boolean insert() {
+    protected boolean insert() {
 
         if (getContactType() == null) {
             Log.e(TAG, "Contact must have contact type");
@@ -204,7 +204,7 @@ public class Contact extends Model {
     }
 
     @Override
-    void loadFromCursor(Cursor cursor) {
+    protected void loadFromCursor(Cursor cursor) {
         try {
             int rowIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Contact._ID);
             int contactIdIndex = cursor.getColumnIndexOrThrow(OutfieldContract.Contact.CONTACT_ID);
@@ -314,7 +314,7 @@ public class Contact extends Model {
     }
 
     @Override
-    ContentValues getContentValues() {
+    protected ContentValues getContentValues() {
         ContentValues values = new ContentValues();
 
         // Contact values
