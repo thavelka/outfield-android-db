@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 import java.util.ArrayList;
@@ -20,26 +22,44 @@ public class Interaction extends Model {
     public static final String TAG = Interaction.class.getSimpleName();
 
     private long rowId;
-    private long interactionId;
-    private String interactionType;
-    private String notes = "";
-    private String shareUrl = "";
-    private String createdAt = "";
-    private boolean inTeamActivity;
     private boolean draft;
     private boolean dirty;
+
+    @SerializedName(Keys.Interaction.ID)
+    private long interactionId;
+    @SerializedName(Keys.Interaction.INTERACTION_TYPE)
+    private String interactionType;
+    @SerializedName(Keys.Interaction.NOTES)
+    private String notes = "";
+    @SerializedName(Keys.Interaction.SHARE_URL)
+    private String shareUrl = "";
+    @SerializedName(Keys.Interaction.CREATED_AT)
+    private String createdAt = "";
+    @SerializedName(Keys.Interaction.IN_TEAM_ACTIVITY)
+    private boolean inTeamActivity;
+    @SerializedName(Keys.Interaction.DESTROY)
     private boolean destroy;
 
+    @SerializedName(Keys.Interaction.USER)
     User user;
+    @SerializedName(Keys.Interaction.INTERACTION_DETAILS)
     InteractionDetails interactionDetails = new InteractionDetails();
+    @SerializedName(Keys.Interaction.CONTACTS)
     List<Contact> contacts = new ArrayList<>();
+    @SerializedName(Keys.Interaction.CONTACT_IDS)
     List<Long> contactIds = new ArrayList<>();
+    @SerializedName(Keys.Interaction.FORMS)
     List<Form> forms = new ArrayList<>();
+    @SerializedName(Keys.Interaction.FORM_IDS)
     List<Long> formIds = new ArrayList<>();
+    @SerializedName(Keys.Interaction.FORM_ENTRIES)
     List<FormEntryGroup> formEntryGroups = new ArrayList<>();
+    @SerializedName(Keys.Interaction.COMMENTS)
     List<Comment> comments = new ArrayList<>();
+    @SerializedName(Keys.Interaction.IMAGES)
     List<Image> images = new ArrayList<>();
 
+    /* Constructors */
     public Interaction() {}
     public Interaction(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -89,6 +109,7 @@ public class Interaction extends Model {
     public void setComments(List<Comment> comments) { this.comments = comments; }
     public void setImages(List<Image> images) { this.images = images; }
 
+    /* Database Access */
     /**
      * Searches Interactions database table for a row with matching {@link #interactionId} and uses
      * {@link #loadFromCursor(Cursor)} to create an {@link Interaction} object from that row.
@@ -416,8 +437,11 @@ public class Interaction extends Model {
     }
 
     private static class InteractionDetails {
+        @SerializedName(Keys.Interaction.InteractionDetails.ID)
         long id;
+        @SerializedName(Keys.Interaction.InteractionDetails.EDITED_DURATION)
         float duration;
+        @SerializedName(Keys.Interaction.InteractionDetails.PATH)
         List<Location> locations = new ArrayList<>();
 
         public void setLocation(float latitude, float longitude) {
@@ -430,7 +454,9 @@ public class Interaction extends Model {
 
         private static class Location {
             long id;
+            @SerializedName(Keys.Interaction.InteractionDetails.Location.LATITUDE)
             float latitude;
+            @SerializedName(Keys.Interaction.InteractionDetails.Location.LONGITUDE)
             float longitude;
 
             Location(float latitude, float longitude) {

@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 import java.util.ArrayList;
@@ -17,20 +19,34 @@ public class Contact extends Model {
     public static final String TAG = Contact.class.getSimpleName();
 
     private long rowId;
-    private long contactId;
-    private String contactType = "";
-    private String name = "";
-    private String title = "";
-    private String company = "";
-    private String website = "";
-    private boolean favored;
     private boolean dirty;
+
+    @SerializedName(Keys.Contact.ID)
+    private long contactId;
+    @SerializedName(Keys.Contact.CONTACT_TYPE)
+    private String contactType = "";
+    @SerializedName(Keys.Contact.NAME)
+    private String name = "";
+    @SerializedName(Keys.Contact.TITLE)
+    private String title = "";
+    @SerializedName(Keys.Contact.COMPANY)
+    private String company = "";
+    @SerializedName(Keys.Contact.WEBSITE)
+    private String website = "";
+    @SerializedName(Keys.Contact.IS_FAVORED)
+    private boolean favored;
+    @SerializedName(Keys.Contact.DESTROY)
     private boolean destroy;
+    @SerializedName(Keys.Contact.ADDRESSES)
     private List<Address> addresses = new ArrayList<>();
+    @SerializedName(Keys.Contact.EMAILS)
     private List<Email> emails = new ArrayList<>();
+    @SerializedName(Keys.Contact.PHONES)
     private List<Phone> phones = new ArrayList<>();
+    @SerializedName(Keys.Contact.IMAGES)
     private List<Image> images = new ArrayList<>();
 
+    /* Constructors */
     public Contact() {}
     public Contact(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -72,6 +88,7 @@ public class Contact extends Model {
     public void setPhones(List<Phone> phones) { this.phones = phones; }
     public void setImages(List<Image> images) { this.images = images; }
 
+    /* Database Access */
     /**
      * Searches Contacts database table for a row with matching {@link #contactId} and uses
      * {@link #loadFromCursor(Cursor)} to create a {@link Contact} object from that row.

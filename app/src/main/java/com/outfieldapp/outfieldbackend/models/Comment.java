@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Comment extends Model {
@@ -13,14 +15,21 @@ public class Comment extends Model {
     public static final String TAG = Comment.class.getSimpleName();
 
     private long rowId;
-    private long commentId;
     private long interactionId;
-    private String text = "";
-    private String createdAt = "";
     private boolean dirty;
+
+    @SerializedName(Keys.Comment.ID)
+    private long commentId;
+    @SerializedName(Keys.Comment.COMMENT_TEXT)
+    private String text = "";
+    @SerializedName(Keys.Comment.CREATED_AT)
+    private String createdAt = "";
+    @SerializedName(Keys.Comment.DESTROY)
     private boolean destroy;
+    @SerializedName(Keys.Comment.USER)
     private User user;
 
+    /* Constructors */
     public Comment() {}
     public Comment(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -42,6 +51,7 @@ public class Comment extends Model {
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
     public void setUser(User user) { this.user = user; }
 
+    /* Database Access */
     /**
      * Searches Comments database table for a row with matching {@link #commentId} and uses
      * {@link #loadFromCursor(Cursor)} to create a {@link Comment} object from that row.

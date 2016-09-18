@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Address extends Model {
@@ -14,19 +16,32 @@ public class Address extends Model {
     public static final String TAG = Address.class.getSimpleName();
 
     private long rowId;
-    private long addressId;
     private long contactId;
+
+    @SerializedName(Keys.Address.ID)
+    private long addressId;
+    @SerializedName(Keys.Address.LABEL)
     private String label = "";
+    @SerializedName(Keys.Address.STREET_1)
     private String street1 = "";
+    @SerializedName(Keys.Address.STREET_2)
     private String street2 = "";
+    @SerializedName(Keys.Address.CITY)
     private String city = "";
+    @SerializedName(Keys.Address.REGION)
     private String region = "";
+    @SerializedName(Keys.Address.POSTAL_CODE)
     private String postalCode = "";
+    @SerializedName(Keys.Address.COUNTRY)
     private String country = "";
+    @SerializedName(Keys.Address.LATITUDE)
     private float latitude;
+    @SerializedName(Keys.Address.LONGITUDE)
     private float longitude;
+    @SerializedName(Keys.Address.DESTROY)
     private boolean destroy;
 
+    /* Constructors */
     public Address() {}
     public Address(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -84,6 +99,7 @@ public class Address extends Model {
         return address;
     }
 
+    /* Database Access */
     @Override
     protected boolean insert() {
 

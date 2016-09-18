@@ -1,5 +1,7 @@
 package com.outfieldapp.outfieldbackend.api;
 
+import com.google.gson.annotations.SerializedName;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Interaction;
 
@@ -11,10 +13,15 @@ public class Response {
     private Response() {}
 
     public static class ContactsResponse {
+        @SerializedName(Keys.Response.Contacts.CONTACTS_COUNT)
         int contactsCount;
+        @SerializedName(Keys.Response.Contacts.PAGES_COUNT)
         int pagesCount;
+        @SerializedName(Keys.Response.Contacts.PAGE)
         int page;
+        @SerializedName(Keys.Response.Contacts.PER_PAGE)
         int perPage;
+        @SerializedName(Keys.Response.Contacts.CONTACTS)
         List<Contact> contacts = new ArrayList<>();
 
         public List<Contact> getContacts() {
@@ -39,10 +46,15 @@ public class Response {
     }
 
     public static class InteractionsResponse {
+        @SerializedName(Keys.Response.Interactions.INTERACTIONS_COUNT)
         int interactionsCount;
+        @SerializedName(Keys.Response.Interactions.PAGES_COUNT)
         int pagesCount;
+        @SerializedName(Keys.Response.Interactions.PAGE)
         int page;
+        @SerializedName(Keys.Response.Interactions.PER_PAGE)
         int perPage;
+        @SerializedName(Keys.Response.Interactions.INTERACTIONS)
         List<Interaction> interactions = new ArrayList<>();
 
         public List<Interaction> getInteractions() {
@@ -67,13 +79,21 @@ public class Response {
     }
 
     public static class SyncResponse {
-        int syncCount;
-        int remainingCount;
-        int contactsCount;
-        int interactionsCount;
         String status = "";
+
+        @SerializedName(Keys.Response.Sync.SYNC_COUNT)
+        int syncCount;
+        @SerializedName(Keys.Response.Sync.REMAINING_COUNT)
+        int remainingCount;
+        @SerializedName(Keys.Response.Sync.CONTACTS_COUNT)
+        int contactsCount;
+        @SerializedName(Keys.Response.Sync.INTERACTIONS_COUNT)
+        int interactionsCount;
+        @SerializedName(Keys.Response.Sync.TOKEN)
         String token;
+        @SerializedName(Keys.Response.Sync.CONTACTS)
         ContactsSyncResponse contacts;
+        @SerializedName(Keys.Response.Sync.INTERACTIONS)
         InteractionsSyncResponse interactions;
 
         public ContactsSyncResponse getContacts() {
@@ -107,14 +127,24 @@ public class Response {
         public String getToken() {
             return token;
         }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
     }
 
     public static class ContactsSyncResponse {
+        @SerializedName(Keys.Response.Sync.CREATE_COUNT)
         int createCount;
+        @SerializedName(Keys.Response.Sync.UPDATE_COUNT)
         int updateCount;
+        @SerializedName(Keys.Response.Sync.DELETE_COUNT)
         int deleteCount;
+        @SerializedName(Keys.Response.Sync.CREATE)
         List<Contact> createdContacts = new ArrayList<>();
+        @SerializedName(Keys.Response.Sync.UPDATE)
         List<Contact> updatedContacts = new ArrayList<>();
+        @SerializedName(Keys.Response.Sync.DELETE)
         List<Integer> deletedContactIds = new ArrayList<>();
 
         public int getCreateCount() {
@@ -150,11 +180,17 @@ public class Response {
     }
 
     public static class InteractionsSyncResponse {
+        @SerializedName(Keys.Response.Sync.CREATE_COUNT)
         int createCount;
+        @SerializedName(Keys.Response.Sync.UPDATE_COUNT)
         int updateCount;
+        @SerializedName(Keys.Response.Sync.DELETE_COUNT)
         int deleteCount;
+        @SerializedName(Keys.Response.Sync.CREATE)
         List<Interaction> createdInteractions = new ArrayList<>();
+        @SerializedName(Keys.Response.Sync.UPDATE)
         List<Interaction> updatedInteractions = new ArrayList<>();
+        @SerializedName(Keys.Response.Sync.DELETE)
         List<Integer> deletedInteractionIds = new ArrayList<>();
 
         public int getCreateCount() {

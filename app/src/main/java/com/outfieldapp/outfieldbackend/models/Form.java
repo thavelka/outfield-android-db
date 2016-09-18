@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 import java.util.ArrayList;
@@ -16,10 +18,15 @@ public class Form extends Model {
     public static final String TAG = Form.class.getSimpleName();
 
     private long rowId;
+
+    @SerializedName(Keys.Form.ID)
     private long formId;
+    @SerializedName(Keys.Form.TITLE)
     private String title = "";
+    @SerializedName(Keys.Form.FORM_FIELDS)
     private List<FormField> formFields = new ArrayList<>();
 
+    /* Constructors */
     public Form() {}
     public Form(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -30,6 +37,7 @@ public class Form extends Model {
     public String getTitle() { return title; }
     public List<FormField> getFormFields() { return formFields; }
 
+    /* Database Access */
     /**
      * Searches Forms database table for a row with matching {@link #formId} and uses
      * {@link #loadFromCursor(Cursor)} to create a {@link Form} object from that row.

@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Email extends Model {
@@ -13,12 +15,18 @@ public class Email extends Model {
     public static final String TAG = Email.class.getSimpleName();
 
     private long rowId;
-    private long emailId;
     private long contactId;
+
+    @SerializedName(Keys.Email.ID)
+    private long emailId;
+    @SerializedName(Keys.Email.LABEL)
     private String label = "";
+    @SerializedName(Keys.Email.VALUE)
     private String value = "";
+    @SerializedName(Keys.Email.DESTROY)
     private boolean destroy;
 
+    /* Constructors */
     public Email() {}
     public Email(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -41,6 +49,7 @@ public class Email extends Model {
         return value;
     }
 
+    /* Database Access */
     @Override
     protected boolean insert() {
 

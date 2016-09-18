@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Phone extends Model {
@@ -13,12 +15,18 @@ public class Phone extends Model {
     public static final String TAG = Phone.class.getSimpleName();
 
     private long rowId;
-    private long phoneId;
     private long contactId;
+
+    @SerializedName(Keys.Phone.ID)
+    private long phoneId;
+    @SerializedName(Keys.Phone.LABEL)
     private String label = "";
+    @SerializedName(Keys.Phone.VALUE)
     private String value = "";
+    @SerializedName(Keys.Phone.DESTROY)
     private boolean destroy;
 
+    /* Constructors */
     public Phone() {}
     public Phone(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -41,6 +49,7 @@ public class Phone extends Model {
         return value;
     }
 
+    /* Database Access */
     @Override
     protected boolean insert() {
 

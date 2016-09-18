@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class FormEntry extends Model {
@@ -14,10 +16,14 @@ public class FormEntry extends Model {
 
     private long rowId;
     private long interactionId;
-    private long formFieldId;
     private long formId;
+
+    @SerializedName(Keys.Interaction.FormEntry.ID)
+    private long formFieldId;
+    @SerializedName(Keys.Interaction.FormEntry.VALUE)
     private String value = "";
 
+    /* Constructors */
     public FormEntry() {}
     public FormEntry(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -35,7 +41,7 @@ public class FormEntry extends Model {
     public void setFormId(long id) { formId = id; }
     public void setValue(String value) { this.value = value; }
 
-
+    /* Database Access */
     @Override
     protected boolean insert() {
         if (interactionId == 0 || formId == 0) {

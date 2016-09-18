@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Notification extends Model {
@@ -13,10 +15,15 @@ public class Notification extends Model {
     public static final String TAG = Notification.class.getSimpleName();
 
     private long rowId;
+
+    @SerializedName(Keys.Notification.ID)
     private long notificationId;
+    @SerializedName(Keys.Notification.CREATED_AT)
     private String createdAt = "";
+    @SerializedName(Keys.Notification.NOTIFICATION_DETAILS)
     private NotificationDetails notificationDetails = new NotificationDetails();
 
+    /* Constructors */
     public Notification() {}
     public Notification(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -26,6 +33,7 @@ public class Notification extends Model {
     public Comment getComment() { return notificationDetails.comment; }
     public Interaction getInteraction() { return notificationDetails.interaction; }
 
+    /* Database Access */
     /**
      * Calls {@link #insert()} method for this Notification object and all submodels. If a
      * Notification with the same {@link #notificationId} already exists in the database, that
@@ -124,7 +132,9 @@ public class Notification extends Model {
     }
 
     private static class NotificationDetails {
+        @SerializedName(Keys.Notification.NotificationDetails.COMMENT)
         Comment comment;
+        @SerializedName(Keys.Notification.NotificationDetails.INTERACTION)
         Interaction interaction;
     }
 }

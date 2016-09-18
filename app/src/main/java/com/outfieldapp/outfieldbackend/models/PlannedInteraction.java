@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 import java.util.ArrayList;
@@ -16,20 +18,33 @@ public class PlannedInteraction extends Model {
     public static final String TAG = PlannedInteraction.class.getSimpleName();
 
     private long rowId;
-    private long interactionId;
-    private String interactionType = "";
-    private String notes = "";
-    private String shareUrl = "";
-    private String date = "";
     private boolean dirty;
+
+    @SerializedName(Keys.Interaction.ID)
+    private long interactionId;
+    @SerializedName(Keys.Interaction.INTERACTION_TYPE)
+    private String interactionType = "";
+    @SerializedName(Keys.Interaction.NOTES)
+    private String notes = "";
+    @SerializedName(Keys.Interaction.SHARE_URL)
+    private String shareUrl = "";
+    @SerializedName(Keys.Interaction.CREATED_AT)
+    private String date = "";
+    @SerializedName(Keys.Interaction.DESTROY)
     private boolean destroy;
 
+    @SerializedName(Keys.Interaction.INTERACTION_DETAILS)
     InteractionDetails interactionDetails = new InteractionDetails();
+    @SerializedName(Keys.Interaction.USER)
     User user;
+    @SerializedName(Keys.Interaction.CONTACTS)
     List<Contact> contacts = new ArrayList<>();
+    @SerializedName(Keys.Interaction.CONTACT_IDS)
     List<Long> contactIds = new ArrayList<>();
+    @SerializedName(Keys.Interaction.COMMENTS)
     List<Comment> comments = new ArrayList<>();
 
+    /* Constructors */
     public PlannedInteraction() {}
     public PlannedInteraction(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -58,6 +73,7 @@ public class PlannedInteraction extends Model {
     public void setContactId(long id) { contactIds.set(0, id); }
     public void setUser(User user) { this.user = user; }
 
+    /* Database Access */
     /**
      * Searches PlannedInteractions database table for a row with matching {@link #interactionId}
      * and uses {@link #loadFromCursor(Cursor)} to create a {@link PlannedInteraction} object from

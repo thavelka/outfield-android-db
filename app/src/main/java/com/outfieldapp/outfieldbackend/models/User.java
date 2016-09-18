@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class User extends Model {
@@ -13,15 +15,24 @@ public class User extends Model {
     public static final String TAG = User.class.getSimpleName();
 
     private long rowId;
-    private long userId;
-    private String name;
-    private String email;
-    private String authToken;
-    private boolean active;
     private boolean dirty;
+
+    @SerializedName(Keys.User.ID)
+    private long userId;
+    @SerializedName(Keys.User.NAME)
+    private String name;
+    @SerializedName(Keys.User.EMAIL)
+    private String email;
+    @SerializedName(Keys.User.USER_TOKEN)
+    private String authToken;
+    @SerializedName(Keys.User.IS_ACTIVE)
+    private boolean active;
+    @SerializedName(Keys.User.IMAGE)
     private Image image;
+    @SerializedName(Keys.User.ORGANIZATION)
     private Organization organization = new Organization();
 
+    /* Constructors */
     public User() {}
     public User(Cursor cursor) {
         if (cursor != null) loadFromCursor(cursor);
@@ -42,6 +53,7 @@ public class User extends Model {
     /* Setters */
     public void setImage(Image image) { this.image = image; }
 
+    /* Database Access */
     /**
      * Searches Users database table for a row with matching {@link #userId} and uses
      * {@link #loadFromCursor(Cursor)} to create a {@link User} object from that row.
@@ -70,8 +82,6 @@ public class User extends Model {
 
         return null;
     }
-
-    /* Database Access */
 
     /**
      * Calls {@link #insert()} method for this user and all submodels. If a user with the
@@ -162,9 +172,13 @@ public class User extends Model {
     }
 
     private static class Organization {
+        @SerializedName(Keys.Organization.ID)
         int organizationId;
+        @SerializedName(Keys.Organization.NAME)
         String name;
+        @SerializedName(Keys.Organization.TIME_ZONE)
         String timeZone;
+        @SerializedName(Keys.Organization.HAS_TEAM_ACTIVITY)
         boolean hasTeamActivity;
     }
 }

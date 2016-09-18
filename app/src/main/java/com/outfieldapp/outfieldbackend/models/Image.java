@@ -5,7 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
 public class Image extends Model {
@@ -13,15 +15,26 @@ public class Image extends Model {
     public static final String TAG = Image.class.getSimpleName();
 
     private long rowId;
-    private long imageId;
     private long contactId;
     private long interactionId;
     private long userId;
     private byte[] imageFile;
     private String uri;
+
+    @SerializedName(Keys.Image.ID)
+    private long imageId;
+    @SerializedName(Keys.Image.ORIGINAL_URL)
     private String originalUrl;
+    @SerializedName(Keys.Image.THUMBNAIL_URL)
     private String thumbnailUrl;
+    @SerializedName(Keys.Image.DESTROY)
     private boolean destroy;
+
+    /* Constructors */
+    public Image() {}
+    public Image(Cursor cursor) {
+        if (cursor != null) loadFromCursor(cursor);
+    }
 
     /* Getters */
     public byte[] getImageFile() { return imageFile; }
@@ -38,11 +51,7 @@ public class Image extends Model {
     public void setUri(String uri) { this.uri = uri; }
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
 
-    public Image() {}
-    public Image(Cursor cursor) {
-        if (cursor != null) loadFromCursor(cursor);
-    }
-
+    /* Database Access */
     @Override
     protected boolean insert() {
         if (contactId == 0 && interactionId == 0 && userId == 0) {
