@@ -2,24 +2,50 @@ package com.outfieldapp.outfieldbackend;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 
+import com.outfieldapp.outfieldbackend.api.ApiService;
+import com.outfieldapp.outfieldbackend.api.Constants;
 import com.outfieldapp.outfieldbackend.database.OutfieldDatabase;
 
 public class OutfieldApp extends Application {
 
-    private static Context mAppContext;
+    public static final String appName = "com.outfieldapp.outfield";
+    private static Context appContext;
+    private static ApiService apiService = ApiService.Builder.createService();
+    private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
 
     public static Context getContext() {
-        return mAppContext;
+        return appContext;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mAppContext = this.getApplicationContext();
+        appContext = this.getApplicationContext();
+
+        SharedPreferences prefs = getSharedPreferences(appName, MODE_PRIVATE);
+        prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                if (s.equals(Constants.Headers.AUTH_TOKEN)) {
+                    String email = sharedPreferences.getString(Constants.Headers.EMAIL, null);
+                    String token = sharedPreferences.getString(Constants.Headers.AUTH_TOKEN, null);
+                    apiService = ApiService.Builder.createService(email, token);
+                    sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefsListener);
+                }
+            }
+        };
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener);
     }
 
     public static OutfieldDatabase getDatabase() {
         return OutfieldDatabase.getInstance(getContext());
     }
+
+    public static ApiService getApiService() {
+        return apiService;
+    }
+
+
 }
