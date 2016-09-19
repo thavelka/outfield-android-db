@@ -8,8 +8,8 @@ import com.outfieldapp.outfieldbackend.BuildConfig;
 public class Constants {
 
     public static final String BASE_URL = BuildConfig.DEBUG
-            ? "https://infield.outfieldapp.com"
-            : "https://run.outfieldapp.com";
+            ? "https://infield.outfieldapp.com/api/v2/"
+            : "https://run.outfieldapp.com/api/v2/";
 
     /* HTTP Header Keys */
     public static class Headers {
@@ -21,21 +21,21 @@ public class Constants {
 
     /* URL Endpoints */
     public static class Endpoints {
-        public static final String SYNC = "/sync";
-        public static final String CONTACTS = "/contacts";
-        public static final String MY_CONTACTS = "/my_contacts";
+        public static final String SYNC = "sync";
+        public static final String CONTACTS = "contacts";
+        public static final String MY_CONTACTS = "my_contacts";
         public static final String EXPLORE = "contacts/explore";
-        public static final String INTERACTIONS = "/interactions";
-        public static final String SIGN_UP = "/sign_up";
-        public static final String SIGN_IN = "/sign_in";
-        public static final String COMMENTS = "/comments";
-        public static final String LEADERBOARD = "/analytics/team_activity_leaderboard";
-        public static final String FORMS = "/forms";
-        public static final String NOTIFICATIONS = "/notifications";
-        public static final String ME = "/me";
-        public static final String ACCOUNT_EXISTS = "/me/new";
-        public static final String PASSWORD_RESET = "/password_reset";
-        public static final String PUSH_CREDENTIALS = "/push_notification_credentials";
+        public static final String INTERACTIONS = "interactions";
+        public static final String SIGN_UP = "sign_up";
+        public static final String SIGN_IN = "sign_in";
+        public static final String COMMENTS = "comments";
+        public static final String LEADERBOARD = "analytics/team_activity_leaderboard";
+        public static final String FORMS = "forms";
+        public static final String NOTIFICATIONS = "notifications";
+        public static final String ME = "me";
+        public static final String ACCOUNT_EXISTS = "me/new";
+        public static final String PASSWORD_RESET = "password_reset";
+        public static final String PUSH_CREDENTIALS = "push_notification_credentials";
     }
 
     /* URL Parameters */

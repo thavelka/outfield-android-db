@@ -383,4 +383,21 @@ public class Contact extends Model {
             return name().toLowerCase();
         }
     }
+
+    public static class Wrapper {
+        @SerializedName(Keys.Contact.CLASS_NAME)
+        public Contact contact;
+
+        public Wrapper(Contact contact) {
+            this.contact = contact;
+        }
+
+        public Contact getContact() {
+            return contact;
+        }
+    }
+
+    public Wrapper wrap() {
+        return new Wrapper(this);
+    }
 }

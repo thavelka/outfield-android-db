@@ -171,6 +171,23 @@ public class User extends Model {
         return values;
     }
 
+    public static class Wrapper {
+        @SerializedName(Keys.User.CLASS_NAME)
+        User user;
+
+        public Wrapper(User user) {
+            this.user = user;
+        }
+
+        public User getUser() {
+            return user;
+        }
+    }
+
+    public Wrapper wrap() {
+        return new Wrapper(this);
+    }
+
     private static class Organization {
         @SerializedName(Keys.Organization.ID)
         int organizationId;

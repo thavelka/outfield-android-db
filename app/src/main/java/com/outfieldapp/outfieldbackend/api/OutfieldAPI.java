@@ -1,4 +1,5 @@
 package com.outfieldapp.outfieldbackend.api;
 
-public class OutfieldAPI {
+public class OutfieldApi {
+
 }
