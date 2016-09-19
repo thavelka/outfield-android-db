@@ -1,12 +1,14 @@
 package com.outfieldapp.outfieldbackend.models;
 
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.google.gson.annotations.SerializedName;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.api.Constants;
 import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
@@ -52,6 +54,7 @@ public class User extends Model {
 
     /* Setters */
     public void setImage(Image image) { this.image = image; }
+    public void setDirty(boolean dirty) { this.dirty = dirty; }
 
     /* Database Access */
     /**
@@ -70,7 +73,8 @@ public class User extends Model {
                     new String[]{String.valueOf(userId)},
                     null,
                     null,
-                    "LIMIT 1"
+                    null,
+                    "1"
             );
 
             if (userCursor != null && userCursor.moveToFirst()) {
@@ -80,6 +84,15 @@ public class User extends Model {
             }
         }
 
+        return null;
+    }
+
+    public static User getCurrentUser() {
+        SharedPreferences prefs = OutfieldApp.getSharedPrefs();
+        long userId = prefs.getLong(Constants.Prefs.CURRENT_USER_ID, -1);
+        if (userId > 0) {
+            return getUserWithId(userId);
+        }
         return null;
     }
 
@@ -143,7 +156,8 @@ public class User extends Model {
                     new String[]{String.valueOf(userId)},
                     null,
                     null,
-                    "LIMIT 1"
+                    null,
+                    "1"
             );
 
             if (imageCursor != null && imageCursor.moveToFirst()) {

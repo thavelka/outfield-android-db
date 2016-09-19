@@ -39,9 +39,16 @@ public class SyncController {
             getUserDetails();
             return;
         }
+
+        isSyncing = true;
+        progress = 0;
+        syncTotal = 0;
+        userInfoCurrent = false;
+
+        syncCurrentUser();
     }
 
-    public void getUserDetails() {
+    private void getUserDetails() {
         Call<User.Wrapper> call = OutfieldApp.getApiService().getUserDetails();
         call.enqueue(new Callback<User.Wrapper>() {
             @Override
@@ -58,5 +65,73 @@ public class SyncController {
                 Log.d(TAG, t.toString());
             }
         });
+    }
+
+    private void syncCurrentUser() {
+        final User currentUser = User.getCurrentUser();
+        if (currentUser == null || !currentUser.isDirty()) return;
+        Call<User.Wrapper> call = OutfieldApp.getApiService().updateUser(currentUser.wrap());
+        call.enqueue(new Callback<User.Wrapper>() {
+            @Override
+            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
+                User user = response.body().getUser();
+                if (user != null && user.getId() > 0) {
+                    user.setDirty(false);
+                    user.setImage(currentUser.getImage());
+                    user.save();
+                    Log.d(TAG, "Updated user on server");
+                    syncUserImage();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Failed to update user", t);
+            }
+        });
+    }
+
+    private void syncUserImage() {
+
+    }
+
+    private void syncContacts() {
+
+    }
+
+    private void syncInteractions() {
+
+    }
+
+    private void syncContactImages() {
+
+    }
+
+    private void syncInteractionImages() {
+
+    }
+
+    private void syncComments() {
+
+    }
+
+    private void syncNotifications() {
+
+    }
+
+    private void syncForms() {
+
+    }
+
+    private void sync() {
+
+    }
+
+    private void onSyncFinished() {
+
+    }
+
+    private void reset() {
+        
     }
 }

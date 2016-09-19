@@ -6,10 +6,17 @@ import com.outfieldapp.outfieldbackend.BuildConfig;
  * Contains constants necessary for interaction with the Outfield REST API.
  */
 public class Constants {
+    private Constants() {}
 
     public static final String BASE_URL = BuildConfig.DEBUG
             ? "https://infield.outfieldapp.com/api/v2/"
             : "https://run.outfieldapp.com/api/v2/";
+
+    /* Shared Prefs Keys*/
+    public static class Prefs {
+        public static final String HAS_TEAM_ACTIVITY = "hasTeamActivity";
+        public static final String CURRENT_USER_ID = "currentUserId";
+    }
 
     /* HTTP Header Keys */
     public static class Headers {

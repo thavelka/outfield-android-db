@@ -24,7 +24,7 @@ public class OutfieldApp extends Application {
         super.onCreate();
         appContext = this.getApplicationContext();
 
-        SharedPreferences prefs = getSharedPreferences(appName, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPrefs();
         prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
@@ -45,6 +45,10 @@ public class OutfieldApp extends Application {
 
     public static ApiService getApiService() {
         return apiService;
+    }
+
+    public static SharedPreferences getSharedPrefs() {
+        return appContext.getSharedPreferences(appName, MODE_PRIVATE);
     }
 
 
