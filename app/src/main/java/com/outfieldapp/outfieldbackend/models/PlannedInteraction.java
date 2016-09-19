@@ -299,6 +299,27 @@ public class PlannedInteraction extends Model {
         }
     }
 
+    /**
+     * Wrapper class required for correct JSON serialization and deserialization of individual
+     * objects. Wrap single objects with wrap() when creating POST payloads for API requests.
+     */
+    public static class Wrapper {
+        @SerializedName(Keys.Interaction.CLASS_NAME)
+        PlannedInteraction interaction;
+
+        public Wrapper(PlannedInteraction interaction) {
+            this.interaction = interaction;
+        }
+
+        public PlannedInteraction getInteraction() {
+            return interaction;
+        }
+    }
+
+    public Wrapper wrap() {
+        return new Wrapper(this);
+    }
+
     private static class InteractionDetails {
         int id;
         float duration;

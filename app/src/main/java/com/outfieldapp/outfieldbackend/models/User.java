@@ -171,6 +171,10 @@ public class User extends Model {
         return values;
     }
 
+    /**
+     * Wrapper class required for correct JSON serialization and deserialization of individual
+     * objects. Wrap single objects with wrap() when creating POST payloads for API requests.
+     */
     public static class Wrapper {
         @SerializedName(Keys.User.CLASS_NAME)
         User user;

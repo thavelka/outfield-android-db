@@ -177,4 +177,25 @@ public class Comment extends Model {
         }
         return values;
     }
+
+    /**
+     * Wrapper class required for correct JSON serialization and deserialization of individual
+     * objects. Wrap single objects with wrap() when creating POST payloads for API requests.
+     */
+    public static class Wrapper {
+        @SerializedName(Keys.Comment.CLASS_NAME)
+        Comment comment;
+
+        public Wrapper(Comment comment) {
+            this.comment = comment;
+        }
+
+        public Comment getComment() {
+            return comment;
+        }
+    }
+
+    public Wrapper wrap() {
+        return new Wrapper(this);
+    }
 }

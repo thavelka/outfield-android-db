@@ -436,6 +436,27 @@ public class Interaction extends Model {
         }
     }
 
+    /**
+     * Wrapper class required for correct JSON serialization and deserialization of individual
+     * objects. Wrap single objects with wrap() when creating POST payloads for API requests.
+     */
+    public static class Wrapper {
+        @SerializedName(Keys.Interaction.CLASS_NAME)
+        Interaction interaction;
+
+        public Wrapper(Interaction interaction) {
+            this.interaction = interaction;
+        }
+
+        public Interaction getInteraction() {
+            return interaction;
+        }
+    }
+
+    public Wrapper wrap() {
+        return new Wrapper(this);
+    }
+
     private static class InteractionDetails {
         @SerializedName(Keys.Interaction.InteractionDetails.ID)
         long id;
