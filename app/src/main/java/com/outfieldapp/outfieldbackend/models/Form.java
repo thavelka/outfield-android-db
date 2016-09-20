@@ -141,4 +141,33 @@ public class Form extends Model {
         values.put(OutfieldContract.Form.TITLE, title);
         return values;
     }
+
+    /**
+     * Wrapper class required for correct JSON serialization and deserialization of individual
+     * objects. Wrap single objects with wrap() when creating POST payloads for API requests.
+     */
+    public static class Wrapper {
+        @SerializedName(Keys.Form.CLASS_NAME)
+        private Form form;
+
+        public Wrapper(Form form) {
+            this.form = form;
+        }
+
+        public Form getForm() {
+            return form;
+        }
+    }
+
+    /**
+     * Wrapper class required for correct JSON deserialization of arrays.
+     */
+    public static class ArrayWrapper {
+        @SerializedName(Keys.Form.PLURAL_NAME)
+        private List<Form> forms = new ArrayList<>();
+
+        public List<Form> getForms() {
+            return forms;
+        }
+    }
 }

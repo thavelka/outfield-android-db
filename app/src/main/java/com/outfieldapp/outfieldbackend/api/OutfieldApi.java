@@ -5,9 +5,12 @@ import android.util.Log;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
 import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
+import com.outfieldapp.outfieldbackend.api.response.SyncResponse;
 import com.outfieldapp.outfieldbackend.models.Comment;
 import com.outfieldapp.outfieldbackend.models.Contact;
+import com.outfieldapp.outfieldbackend.models.Form;
 import com.outfieldapp.outfieldbackend.models.Interaction;
+import com.outfieldapp.outfieldbackend.models.Notification;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.List;
@@ -800,6 +803,8 @@ public final class OutfieldApi {
 
     // TODO: public static void uploadInteractionImages(List<Image> images, long interactionId)
 
+    // TODO: Analytics requests
+
     //#############################################################################################
     //                                     COMMENT REQUESTS
     //#############################################################################################
@@ -913,6 +918,142 @@ public final class OutfieldApi {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Log.e(TAG, "Error during deleteComment", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    //#############################################################################################
+    //                                      FORMS REQUESTS
+    //#############################################################################################
+
+    /**
+     * <code>GET /api/v2/forms</code>
+     * <p>
+     * Retrieves all current interaction forms.
+     * @param callback Callback to receive boolean success value and array of forms
+     */
+    public static void getLatestForms(final ResponseCallback<List<Form>> callback) {
+        Call<Form.ArrayWrapper> call = OutfieldApp.getApiService().getLatestForms();
+        call.enqueue(new Callback<Form.ArrayWrapper>() {
+            @Override
+            public void onResponse(Call<Form.ArrayWrapper> call, Response<Form.ArrayWrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getForms());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Form.ArrayWrapper> call, Throwable t) {
+                Log.e(TAG, "Error during getLatestForms", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>GET /api/v2/forms/{id}</code>
+     * <p>
+     * Retrieves form matching specified form ID.
+     * @param formId API ID of form to be retrieved.
+     * @param callback Callback to receive boolean success value and retrieved form.
+     */
+    public static void getForm(long formId, final ResponseCallback<Form> callback) {
+
+        if (formId <= 0) {
+            Log.e(TAG, "Form does not exist on server");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Form.Wrapper> call = OutfieldApp.getApiService().getForm(formId);
+        call.enqueue(new Callback<Form.Wrapper>() {
+            @Override
+            public void onResponse(Call<Form.Wrapper> call, Response<Form.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getForm());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Form.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during getForm", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    //#############################################################################################
+    //                                   NOTIFICATIONS REQUESTS
+    //#############################################################################################
+
+    /**
+     * <code>GET /api/v2/notifications</code>
+     * <p>
+     * Retrieves latest page of notifications for user
+     * @param callback Callback to receive boolean success value and array of notifications.
+     */
+    public static void getNotifications(final ResponseCallback<List<Notification>> callback) {
+        Call<Notification.ArrayWrapper> call = OutfieldApp.getApiService().getNotifications();
+        call.enqueue(new Callback<Notification.ArrayWrapper>() {
+            @Override
+            public void onResponse(Call<Notification.ArrayWrapper> call, Response<Notification.ArrayWrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getNotifications());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Notification.ArrayWrapper> call, Throwable t) {
+                Log.e(TAG, "Error during getNotifications", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    //#############################################################################################
+    //                                       SYNC REQUESTS
+    //#############################################################################################
+
+    /**
+     * <code>GET /api/v2/sync</code>
+     * <p>
+     * Gets contact and interaction changes for favored contacts from server.
+     * @param onlyMe When false, gets interactions by all team members. Defaults to false if null.
+     * @param perSync The number of items to retrieve per page. Defaults to 50 if null.
+     * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
+     * @param callback Callback to receive boolean success value and {@link SyncResponse}.
+     */
+    public static void sync(Boolean onlyMe, Integer perSync, String syncToken,
+                            final ResponseCallback<SyncResponse> callback) {
+
+        // Set default params
+        if (onlyMe == null) onlyMe = false;
+        if (perSync == null) perSync = 50;
+
+        Call<SyncResponse> call = OutfieldApp.getApiService().sync(onlyMe, perSync, syncToken);
+        call.enqueue(new Callback<SyncResponse>() {
+            @Override
+            public void onResponse(Call<SyncResponse> call, Response<SyncResponse> response) {
+                if (response.isSuccessful()) {
+                    String status = response.headers().get(Constants.Headers.SYNC_STATUS);
+                    SyncResponse syncResponse = response.body();
+                    syncResponse.setStatus(status);
+                    callback.onResponse(true, syncResponse);
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SyncResponse> call, Throwable t) {
+                Log.e(TAG, "Error during sync", t);
                 callback.onResponse(false, null);
             }
         });

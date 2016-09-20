@@ -5,9 +5,12 @@ import com.outfieldapp.outfieldbackend.api.Constants.Headers;
 import com.outfieldapp.outfieldbackend.api.Constants.Params;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
 import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
+import com.outfieldapp.outfieldbackend.api.response.SyncResponse;
 import com.outfieldapp.outfieldbackend.models.Comment;
 import com.outfieldapp.outfieldbackend.models.Contact;
+import com.outfieldapp.outfieldbackend.models.Form;
 import com.outfieldapp.outfieldbackend.models.Interaction;
+import com.outfieldapp.outfieldbackend.models.Notification;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.io.IOException;
@@ -205,6 +208,7 @@ public interface ApiService {
 
     // TODO: Upload interaction images
 
+    // TODO: Analytics requests
 
     //#############################################################################################
     //                                     COMMENT REQUESTS
@@ -225,5 +229,35 @@ public interface ApiService {
     @DELETE(Endpoints.COMMENTS + "/{id}")
     Call<Void> deleteComment(
             @Path("id") long commentId
+    );
+
+    //#############################################################################################
+    //                                      FORMS REQUESTS
+    //#############################################################################################
+
+    @GET(Endpoints.FORMS)
+    Call<Form.ArrayWrapper> getLatestForms();
+
+    @GET(Endpoints.FORMS + "/{id}")
+    Call<Form.Wrapper> getForm(
+            @Path("id") long formId
+    );
+
+    //#############################################################################################
+    //                                   NOTIFICATIONS REQUESTS
+    //#############################################################################################
+
+    @GET(Endpoints.NOTIFICATIONS)
+    Call<Notification.ArrayWrapper> getNotifications();
+
+    //#############################################################################################
+    //                                       SYNC REQUESTS
+    //#############################################################################################
+
+    @GET(Endpoints.SYNC)
+    Call<SyncResponse> sync(
+            @Query(Params.Sync.ONLY_ME) Boolean onlyMe,
+            @Query(Params.Sync.PER_SYNC) Integer perSync,
+            @Query(Params.Sync.SYNC_TOKEN) String syncToken
     );
 }

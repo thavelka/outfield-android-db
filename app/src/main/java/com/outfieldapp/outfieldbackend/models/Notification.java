@@ -10,6 +10,9 @@ import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.api.Constants.Keys;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Notification extends Model {
 
     public static final String TAG = Notification.class.getSimpleName();
@@ -136,5 +139,17 @@ public class Notification extends Model {
         Comment comment;
         @SerializedName(Keys.Notification.NotificationDetails.INTERACTION)
         Interaction interaction;
+    }
+
+    /**
+     * Wrapper class required for correct JSON deserialization of arrays.
+     */
+    public static class ArrayWrapper {
+        @SerializedName(Keys.Notification.PLURAL_NAME)
+        private List<Notification> notifications = new ArrayList<>();
+
+        public List<Notification> getNotifications() {
+            return notifications;
+        }
     }
 }
