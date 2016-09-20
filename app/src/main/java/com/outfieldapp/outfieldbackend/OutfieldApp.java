@@ -12,8 +12,7 @@ public class OutfieldApp extends Application {
 
     public static final String appName = "com.outfieldapp.outfield";
     private static Context appContext;
-    private static ApiService apiService = ApiService.Builder.createService();
-    private SharedPreferences.OnSharedPreferenceChangeListener prefsListener;
+    private static ApiService apiService;
 
     public static Context getContext() {
         return appContext;
@@ -23,20 +22,18 @@ public class OutfieldApp extends Application {
     public void onCreate() {
         super.onCreate();
         appContext = this.getApplicationContext();
+        apiService = createApiService();
 
         SharedPreferences prefs = getSharedPrefs();
-        prefsListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        prefs.registerOnSharedPreferenceChangeListener(
+                new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
                 if (s.equals(Constants.Headers.AUTH_TOKEN)) {
-                    String email = sharedPreferences.getString(Constants.Headers.EMAIL, null);
-                    String token = sharedPreferences.getString(Constants.Headers.AUTH_TOKEN, null);
-                    apiService = ApiService.Builder.createService(email, token);
-                    sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefsListener);
+                    apiService = createApiService();
                 }
             }
-        };
-        prefs.registerOnSharedPreferenceChangeListener(prefsListener);
+        });
     }
 
     public static OutfieldDatabase getDatabase() {
@@ -49,6 +46,12 @@ public class OutfieldApp extends Application {
 
     public static SharedPreferences getSharedPrefs() {
         return appContext.getSharedPreferences(appName, MODE_PRIVATE);
+    }
+
+    private static ApiService createApiService() {
+        String email = getSharedPrefs().getString(Constants.Headers.EMAIL, null);
+        String token = getSharedPrefs().getString(Constants.Headers.AUTH_TOKEN, null);
+        return ApiService.Builder.createService(email, token);
     }
 
 

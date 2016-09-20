@@ -1,9 +1,12 @@
 package com.outfieldapp.outfieldbackend;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.outfieldapp.outfieldbackend.api.Constants;
 import com.outfieldapp.outfieldbackend.api.OutfieldApi;
+import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
 import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
@@ -25,7 +28,25 @@ public class MainActivity extends AppCompatActivity {
         OutfieldApi.signIn("tim.havelka@gmail.com", "fortune1", new OutfieldApi.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
+                if (success && object.getId() > 0) {
+                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
+                    editor.putLong(Constants.Prefs.CURRENT_USER_ID, object.getId());
+                    editor.putString(Constants.Headers.EMAIL, object.getEmail());
+                    editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
+                    editor.commit();
+                    getContacts();
+                }
+            }
+        });
+    }
 
+    public void getContacts() {
+        OutfieldApi.getPeople(null, null, null, null, new OutfieldApi.ResponseCallback<ContactsResponse>() {
+            @Override
+            public void onResponse(boolean success, ContactsResponse object) {
+                if (success) {
+                    List<Contact> contact = object.getContacts();
+                }
             }
         });
     }
