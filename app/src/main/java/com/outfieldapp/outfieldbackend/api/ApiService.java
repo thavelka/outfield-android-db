@@ -4,7 +4,9 @@ import com.outfieldapp.outfieldbackend.api.Constants.Endpoints;
 import com.outfieldapp.outfieldbackend.api.Constants.Headers;
 import com.outfieldapp.outfieldbackend.api.Constants.Params;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
+import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
 import com.outfieldapp.outfieldbackend.models.Contact;
+import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.io.IOException;
@@ -91,6 +93,8 @@ public interface ApiService {
     @POST(Endpoints.PASSWORD_RESET)
     Call<Void> resetPassword(@Query(Params.PasswordReset.EMAIL) String email);
 
+    // TODO: Upload user image
+
 
     /* Contact Requests */
     @GET(Endpoints.MY_CONTACTS)
@@ -126,7 +130,7 @@ public interface ApiService {
 
     @POST(Endpoints.MY_CONTACTS)
     Call<Contact.Wrapper> favorContact(
-            @Query(Params.Contacts.CONTACT_ID) Long contactId
+            @Query(Params.Contacts.CONTACT_ID) long contactId
     );
 
     @POST(Endpoints.MY_CONTACTS)
@@ -141,17 +145,51 @@ public interface ApiService {
 
     @PUT(Endpoints.CONTACTS + "/{id}")
     Call<Contact.Wrapper> updateContact(
-            @Path("id") Long id,
+            @Path("id") long id,
             @Body Contact.Wrapper contact
     );
 
     @DELETE(Endpoints.MY_CONTACTS + "/{id}")
     Call<Void> unfavorContact(
-            @Path("id") Long id
+            @Path("id") long id
     );
 
     @DELETE(Endpoints.CONTACTS + "/{id}")
     Call<Void> deleteContact(
-            @Path("id") Long id
+            @Path("id") long id
     );
+
+    // TODO: upload contact image
+
+    /* Interaction Requests */
+    @GET(Endpoints.INTERACTIONS)
+    Call<InteractionsResponse> getInteractions(
+            @Query(Params.Interactions.ONLY_ME) boolean onlyMe,
+            @Query(Params.Interactions.PAGE) Integer page,
+            @Query(Params.Interactions.PER_PAGE) Integer perPage,
+            @Query(Params.Interactions.INTERACTION_TYPE) String interactionType,
+            @Query(Params.Interactions.SEARCH) String search
+    );
+
+    @GET(Endpoints.INTERACTIONS + "/{id}")
+    Call<Interaction.Wrapper> getInteraction(
+            @Path("id") long id
+    );
+
+    @POST(Endpoints.INTERACTIONS)
+    Call<Interaction.Wrapper> createInteraction(
+            @Body Interaction.Wrapper interaction
+    );
+
+    @PUT(Endpoints.INTERACTIONS + "/{id}")
+    Call<Interaction.Wrapper> updateInteraction(
+            @Path("id") long id,
+            @Body Interaction.Wrapper interaction
+    );
+
+    @DELETE(Endpoints.INTERACTIONS + "/{id}")
+    Call<Void> deleteInteraction(
+            @Path("id") long id
+    );
+
 }

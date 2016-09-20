@@ -4,7 +4,9 @@ import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
+import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
 import com.outfieldapp.outfieldbackend.models.Contact;
+import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.List;
@@ -212,9 +214,9 @@ public class OutfieldApi {
     public static void getPeople(Integer page, Integer perPage, Boolean global, String search,
                                  final ResponseCallback<ContactsResponse> callback) {
         // Set default parameter values
-        page = (page != null) ? page : 1;
-        perPage = (perPage != null) ? perPage : 25;
-        global = (global != null) ? global : false;
+        if (page == null) page = 1;
+        if (perPage == null) perPage = 25;
+        if (global == null) global = false;
 
         Call<ContactsResponse> call = OutfieldApp.getApiService()
                 .getPeople(Contact.Type.PERSON.toString(), search, perPage, page, global);
@@ -252,10 +254,12 @@ public class OutfieldApi {
     public static void getPlaces(Integer page, Integer perPage, Boolean global, String search,
                                  Double latitude, Double longitude, Integer radius,
                                  final ResponseCallback<ContactsResponse> callback) {
+
         // Set default parameter values
-        page = (page != null) ? page : 1;
-        perPage = (perPage != null) ? perPage : 25;
-        global = (global != null) ? global : false;
+        if (page == null) page = 1;
+        if (perPage == null) perPage = 25;
+        if (global == null) global = false;
+
         String location = null;
         if (latitude != null && longitude != null) {
             location = latitude + "," + longitude;
@@ -293,7 +297,7 @@ public class OutfieldApi {
      */
     public static void explore(Double latitude, Double longitude, String search,
                                final ResponseCallback<List<Contact>> callback) {
-        search = (search != null) ? search : null;
+
         String location = null;
         if (latitude != null && longitude != null) {
             location = latitude + "," + longitude;
@@ -326,6 +330,7 @@ public class OutfieldApi {
      * @param callback Callback to received boolean success value and retrieved contact.
      */
     public static void getContact(long contactId, final ResponseCallback<Contact> callback) {
+
         if (contactId <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
             callback.onResponse(false, null);
@@ -428,6 +433,7 @@ public class OutfieldApi {
      * @param callback Callback to receive boolean success value.
      */
     public static void unfavorContact(long contactId, final ResponseCallback<Void> callback) {
+
         if (contactId <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
             callback.onResponse(false, null);
@@ -463,6 +469,7 @@ public class OutfieldApi {
      * @param callback Callback to receive the boolean success value and returned new contact.
      */
     public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
+
         if (contact.getId() >= 0) {
             Log.e(TAG, "Contact already exists on server.");
             callback.onResponse(false, null);
@@ -505,6 +512,7 @@ public class OutfieldApi {
      * @param callback Callback to receive the boolean success value and returned new contact.
      */
     public static void updateContact(Contact contact, final ResponseCallback<Contact> callback) {
+
         if (contact.getId() <= 0) {
             Log.e(TAG, "Contact does not exist on server.");
             callback.onResponse(false, null);
@@ -547,6 +555,7 @@ public class OutfieldApi {
      * @param callback Callback to receive boolean success value.
      */
     public static void deleteContact(long contactId, final ResponseCallback<Void> callback) {
+
         if (contactId <= 0) {
             Log.e(TAG, "Contact does not exist on server.");
             callback.onResponse(false, null);
@@ -572,5 +581,207 @@ public class OutfieldApi {
         });
     }
 
-    // TODO: public static void uploadContactImages(List<Image> images, long contactId)FFinissdfasdfasdf
+    // TODO: public static void uploadContactImages(List<Image> images, long contactId)
+
+    //#############################################################################################
+    //                                  INTERACTION REQUESTS
+    //#############################################################################################
+
+    /**
+     * <code>GET /api/v2/interactions</code>
+     * <p>
+     * @param onlyMe When false, retrieves interactions by all team members.
+     * @param page The page to retrieve. Index begins at 1, not 0. Defaults to 1 if null.
+     * @param perPage The number of interactions to retrieve per page. Defaults to 25 if null.
+     * @param interactionType Only retrieve interactions of a particular type. (optional)
+     * @param search Search interactions for provided text. (optional)
+     * @param callback Callback to receive boolean success value and response.
+     */
+    public static void getInteractions(boolean onlyMe, Integer page, Integer perPage,
+                                           Interaction.Type interactionType, String search,
+                                           final ResponseCallback<InteractionsResponse> callback) {
+
+        // Set default params
+        if (page == null) page = 1;
+        if (perPage == null) perPage = 25;
+        String type = (interactionType != null) ? interactionType.toString() : null;
+
+        Call<InteractionsResponse> call = OutfieldApp.getApiService()
+                .getInteractions(onlyMe, page, perPage, type, search);
+        call.enqueue(new Callback<InteractionsResponse>() {
+            @Override
+            public void onResponse(Call<InteractionsResponse> call, Response<InteractionsResponse> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<InteractionsResponse> call, Throwable t) {
+                Log.e(TAG, "Error during getInteractions", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>GET /api/v2/interactions/{id}</code>
+     * <p>
+     * Attempts to retrieve interaction with provided ID.
+     * @param interactionId API ID of interaction to be retrieved.
+     * @param callback Callback to receive boolean success value and retrieved contact.
+     */
+    public static void getInteraction(long interactionId, final ResponseCallback<Interaction> callback) {
+
+        if (interactionId <= 0) {
+            Log.e(TAG, "Interaction does not exist on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Interaction.Wrapper> call = OutfieldApp.getApiService().getInteraction(interactionId);
+        call.enqueue(new Callback<Interaction.Wrapper>() {
+            @Override
+            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getInteraction());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during getInteraction", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>POST /api/v2/interactions</code>
+     * <p>
+     * Creates an interaction on the server with the properties of the attached interaction.
+     * This method should not be used if the interaction already has an ID. If the interaction has
+     * an ID, it already exists on the server and should be updated using
+     * {@link #updateInteraction}.
+     * @param interaction The interaction to be uploaded.
+     * @param callback Callback to receive boolean success value and created interaction.
+     */
+    public static void createInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
+
+        if (interaction.getId() > 0) {
+            Log.e(TAG, "Interaction already exists on server");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        if (interaction.getInteractionType() == null) {
+            Log.e(TAG, "Interaction must have type");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Interaction.Wrapper> call = OutfieldApp.getApiService().createInteraction(interaction.wrap());
+        call.enqueue(new Callback<Interaction.Wrapper>() {
+            @Override
+            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getInteraction());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during createInteraction", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>PUT /api/v2/interactions/{id}</code>
+     * <p>
+     * Updates an existing interaction on the server with the properties of the attached
+     * interaction. This method should only be used for interactions that already have an ID.
+     * If the interaction does not have an ID, it doesn't exist on the server yet, and needs to be
+     * created using {@link #createInteraction}.
+     * @param interaction The interaction to be updated.
+     * @param callback Callback to receive boolean success value and updated interaction.
+     */
+    public static void updateInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
+
+        if (interaction.getId() <= 0) {
+            Log.e(TAG, "Interaction does not exist on server");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        if (interaction.getInteractionType() == null) {
+            Log.e(TAG, "Interaction must have type");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Interaction.Wrapper> call = OutfieldApp.getApiService()
+                .updateInteraction(interaction.getId(), interaction.wrap());
+        call.enqueue(new Callback<Interaction.Wrapper>() {
+            @Override
+            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getInteraction());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during updateInteraction", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>DELETE /api/v2/interactions/{id}</code>
+     * <p>
+     * Deletes an existing interaction from the server. This method is only necessary for
+     * interactions that already have an ID. If the interaction does not have an ID, it doesn't
+     * exist on the server yet and only needs to be deleted locally.
+     * @param interactionId API ID of the interaction to be deleted.
+     * @param callback Callback to receive boolean success value.
+     */
+    public static void deleteInteraction(long interactionId, final ResponseCallback<Void> callback) {
+
+        if (interactionId <= 0) {
+            Log.e(TAG, "Interaction does not exist on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Void> call = OutfieldApp.getApiService().deleteInteraction(interactionId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, null);
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "Error during deleteInteraction", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    // TODO: public static void uploadInteractionImages(List<Image> images, long interactionId)
 }
