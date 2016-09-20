@@ -184,7 +184,7 @@ public class Comment extends Model {
      */
     public static class Wrapper {
         @SerializedName(Keys.Comment.CLASS_NAME)
-        Comment comment;
+        private Comment comment;
 
         public Wrapper(Comment comment) {
             this.comment = comment;

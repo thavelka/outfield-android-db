@@ -317,4 +317,260 @@ public class OutfieldApi {
             }
         });
     }
+
+    /**
+     * <code>GET /api/v2/contacts/{id}></code>
+     * <p>
+     * Attempts to retrieve contact with provided id.
+     * @param contactId API ID of the contact to be retrieved.
+     * @param callback Callback to received boolean success value and retrieved contact.
+     */
+    public static void getContact(long contactId, final ResponseCallback<Contact> callback) {
+        if (contactId <= 0) {
+            Log.e(TAG, "Contact ID must be greater than 0.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Contact.Wrapper> call = OutfieldApp.getApiService().getContact(contactId);
+        call.enqueue(new Callback<Contact.Wrapper>() {
+            @Override
+            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getContact());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during getContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>POST /api/v2/my_contacts</code>
+     * Add an organization's contact to the current user's “my contacts” list.
+     * @param contactId API ID of the contact to be favored.
+     * @param callback Callback to receive boolean success value and favored contact.
+     */
+    public static void favorContact(long contactId, final ResponseCallback<Contact> callback) {
+
+        if (contactId <= 0) {
+            Log.e(TAG, "Contact ID must be greater than 0.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Contact.Wrapper> call = OutfieldApp.getApiService().favorContact(contactId);
+        call.enqueue(new Callback<Contact.Wrapper>() {
+            @Override
+            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getContact());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during favorContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>POST /api/v2/my_contacts</code>
+     * <p>
+     * Add an organization's contact to the current user's “my contacts” list,
+     * while simultaneously updating the contact.
+     * @param contact Contact object to be favored and updated.
+     * @param callback Callback to receive boolean success value and updated contact.
+     */
+    public static void updateAndFavorContact(Contact contact, final ResponseCallback<Contact> callback) {
+
+        if (contact.getId() <= 0) {
+            Log.e(TAG, "Contact ID must be greater than 0.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Contact.Wrapper> call = OutfieldApp.getApiService().updateAndFavorContact(contact.wrap());
+        call.enqueue(new Callback<Contact.Wrapper>() {
+            @Override
+            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getContact());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during updateAndFavorContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>DELETE /api/v2/my_contacts/{id}</code>
+     * <p>
+     * Remove a contact from the current user's “my contacts” list, keep the contact in the
+     * organization.
+     * @param contactId API ID of the contact to be unfavored.
+     * @param callback Callback to receive boolean success value.
+     */
+    public static void unfavorContact(long contactId, final ResponseCallback<Void> callback) {
+        if (contactId <= 0) {
+            Log.e(TAG, "Contact ID must be greater than 0.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Void> call = OutfieldApp.getApiService().unfavorContact(contactId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, null);
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "Error during unfavorContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>POST /api/v2/contacts</code>
+     * <p>
+     * Creates a contact on the server with the properties of the attached contact.
+     * This method should not be used if the contact already has an ID. If the contact has an ID,
+     * it already exists on the server and should be updated using {@link #updateContact}.
+     * @param contact The contact to be uploaded.
+     * @param callback Callback to receive the boolean success value and returned new contact.
+     */
+    public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
+        if (contact.getId() >= 0) {
+            Log.e(TAG, "Contact already exists on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        if (contact.getContactType() == null) {
+            Log.e(TAG, "Contact must have type.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Contact.Wrapper> call = OutfieldApp.getApiService().createContact(contact.wrap());
+        call.enqueue(new Callback<Contact.Wrapper>() {
+            @Override
+            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getContact());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during createContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>PUT /api/v2/contacts/{id}</code>
+     * <p>
+     * Updates an existing contact on the server with the properties of the attached contact.
+     * This method should only be used for contacts that already have an ID. If the contact does
+     * not have an ID, it doesn't exist on the server yet, and needs to be created using
+     * {@link #createContact}.
+     * @param contact The contact to be uploaded.
+     * @param callback Callback to receive the boolean success value and returned new contact.
+     */
+    public static void updateContact(Contact contact, final ResponseCallback<Contact> callback) {
+        if (contact.getId() <= 0) {
+            Log.e(TAG, "Contact does not exist on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        if (contact.getContactType() == null) {
+            Log.e(TAG, "Contact must have type.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Contact.Wrapper> call = OutfieldApp.getApiService()
+                .updateContact(contact.getId(), contact.wrap());
+        call.enqueue(new Callback<Contact.Wrapper>() {
+            @Override
+            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getContact());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during updateContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>DELETE /api/v2/contacts/{id}</code>
+     * <p>
+     * Deletes an existing contact from the server. This method is only necessary for
+     * contacts that already have an ID. If the contact does not have an ID, it doesn't
+     * exist on the server yet and only needs to be deleted locally.
+     * @param contactId API ID of the contact to be deleted.
+     * @param callback Callback to receive boolean success value.
+     */
+    public static void deleteContact(long contactId, final ResponseCallback<Void> callback) {
+        if (contactId <= 0) {
+            Log.e(TAG, "Contact does not exist on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Void> call = OutfieldApp.getApiService().deleteContact(contactId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, null);
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "Error during deleteContact", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    // TODO: public static void uploadContactImages(List<Image> images, long contactId)FFinissdfasdfasdf
 }

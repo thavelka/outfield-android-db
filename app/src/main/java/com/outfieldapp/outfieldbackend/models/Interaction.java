@@ -442,7 +442,7 @@ public class Interaction extends Model {
      */
     public static class Wrapper {
         @SerializedName(Keys.Interaction.CLASS_NAME)
-        Interaction interaction;
+        private Interaction interaction;
 
         public Wrapper(Interaction interaction) {
             this.interaction = interaction;

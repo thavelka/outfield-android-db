@@ -305,7 +305,7 @@ public class PlannedInteraction extends Model {
      */
     public static class Wrapper {
         @SerializedName(Keys.Interaction.CLASS_NAME)
-        PlannedInteraction interaction;
+        private PlannedInteraction interaction;
 
         public Wrapper(PlannedInteraction interaction) {
             this.interaction = interaction;

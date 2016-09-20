@@ -401,7 +401,7 @@ public class Contact extends Model {
      */
     public static class Wrapper {
         @SerializedName(Keys.Contact.CLASS_NAME)
-        public Contact contact;
+        private Contact contact;
 
         public Wrapper(Contact contact) {
             this.contact = contact;

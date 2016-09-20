@@ -141,17 +141,17 @@ public interface ApiService {
 
     @PUT(Endpoints.CONTACTS + "/{id}")
     Call<Contact.Wrapper> updateContact(
-            @Path("id") Integer id,
+            @Path("id") Long id,
             @Body Contact.Wrapper contact
     );
 
     @DELETE(Endpoints.MY_CONTACTS + "/{id}")
-    Call<Contact.Wrapper> unfavorContact(
+    Call<Void> unfavorContact(
             @Path("id") Long id
     );
 
     @DELETE(Endpoints.CONTACTS + "/{id}")
-    Call deleteContact(
+    Call<Void> deleteContact(
             @Path("id") Long id
     );
 }

@@ -191,7 +191,7 @@ public class User extends Model {
      */
     public static class Wrapper {
         @SerializedName(Keys.User.CLASS_NAME)
-        User user;
+        private User user;
 
         public Wrapper(User user) {
             this.user = user;
