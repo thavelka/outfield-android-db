@@ -5,6 +5,7 @@ import android.util.Log;
 import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
 import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
+import com.outfieldapp.outfieldbackend.models.Comment;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.User;
@@ -15,14 +16,28 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class OutfieldApi {
+/**
+ * Provides static methods for communicating with Outfield REST API asynchronously.
+ * A {@link ResponseCallback} is provided as a parameter to any request method to capture the
+ * response data and return it to the calling thread.
+ *
+ * @see {@link ResponseCallback}
+ */
+public final class OutfieldApi {
 
     public static final String TAG = OutfieldApi.class.getSimpleName();
+    private OutfieldApi() {}
 
     //#############################################################################################
     //                                      USER REQUESTS
     //#############################################################################################
 
+    /**
+     * Callback used to capture response data.
+     * <code>success</code> will be false if the parameters are invalid or if the HTTP response code
+     * is not between 200 and 300.
+     * @param <T> The type of object to be returned from the API response.
+     */
     public interface ResponseCallback<T> {
         public void onResponse(boolean success, T object);
     }
@@ -558,7 +573,7 @@ public class OutfieldApi {
 
         if (contactId <= 0) {
             Log.e(TAG, "Contact does not exist on server.");
-            callback.onResponse(false, null);
+            callback.onResponse(true, null);
             return;
         }
 
@@ -760,7 +775,7 @@ public class OutfieldApi {
 
         if (interactionId <= 0) {
             Log.e(TAG, "Interaction does not exist on server.");
-            callback.onResponse(false, null);
+            callback.onResponse(true, null);
             return;
         }
 
@@ -784,4 +799,122 @@ public class OutfieldApi {
     }
 
     // TODO: public static void uploadInteractionImages(List<Image> images, long interactionId)
+
+    //#############################################################################################
+    //                                     COMMENT REQUESTS
+    //#############################################################################################
+
+    /**
+     * <code>POST /api/v2/interactions/{id}/comments</code>
+     * <p>
+     * Creates a comment for an interaction on the server. This method should only be used on
+     * comments that do not have an ID. If the comment has an ID, it already exists on the server
+     * and should be updated using {@link #updateComment}.
+     * @param comment The comment to be uploaded.
+     * @param callback Callback to receive boolean success value and created comment.
+     */
+    public static void createComment(Comment comment, final ResponseCallback<Comment> callback) {
+
+        if (comment.getId() > 0) {
+            Log.e(TAG, "Comment already exists on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        if (comment.getInteractionId() <= 0) {
+            Log.e(TAG, "Comment has no parent interaction on server.");
+            callback.onResponse(false, null);
+            return;
+        }
+
+        Call<Comment.Wrapper> call = OutfieldApp.getApiService()
+                .createComment(comment.getInteractionId(), comment.wrap());
+        call.enqueue(new Callback<Comment.Wrapper>() {
+            @Override
+            public void onResponse(Call<Comment.Wrapper> call, Response<Comment.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getComment());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Comment.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during createComment", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>PUT /api/v2/comments/{id}</code>
+     * <p>
+     * Updates a comment on the server. This method should only be used on comments that have an ID.
+     * If the comment does not have an ID, it does not exist on the server yet and should be created
+     * using {@link #createComment}.
+     * @param comment The comment to be updated.
+     * @param callback Callback to receive boolean success value and updated comment.
+     */
+    public static void updateComment(Comment comment, final ResponseCallback<Comment> callback) {
+
+        if (comment.getId() <= 0) {
+            Log.e(TAG, "Comment does not exist on server.");
+            callback.onResponse(false, null);
+        }
+
+        Call<Comment.Wrapper> call = OutfieldApp.getApiService()
+                .updateComment(comment.getId(), comment.wrap());
+        call.enqueue(new Callback<Comment.Wrapper>() {
+            @Override
+            public void onResponse(Call<Comment.Wrapper> call, Response<Comment.Wrapper> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, response.body().getComment());
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Comment.Wrapper> call, Throwable t) {
+                Log.e(TAG, "Error during updateComment", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
+
+    /**
+     * <code>DELETE /api/v2/comments/{id}</code>
+     * <p>
+     * Deletes a comment on the server. This method is only necessary for comments that have an ID.
+     * If the comment does not have an ID, it does not exist on the server yet and only needs to be
+     * deleted locally.
+     * @param commentId API ID of the comment to be deleted.
+     * @param callback Callback to receive boolean success value.
+     */
+    public static void deleteComment(long commentId, final ResponseCallback<Void> callback) {
+
+        if (commentId <= 0) {
+            Log.e(TAG, "Comment does not exist on server.");
+            callback.onResponse(true, null);
+        }
+
+        Call<Void> call = OutfieldApp.getApiService().deleteComment(commentId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    callback.onResponse(true, null);
+                } else {
+                    onFailure(call, new Exception("Status code: " + response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "Error during deleteComment", t);
+                callback.onResponse(false, null);
+            }
+        });
+    }
 }

@@ -37,6 +37,7 @@ public class Comment extends Model {
 
     /* Getters */
     public long getId() { return commentId; }
+    public long getInteractionId() { return interactionId; }
     public String getText() { return text; }
     public String getCreatedAt() { return createdAt; }
     public boolean isDirty() { return dirty; }

@@ -5,6 +5,7 @@ import com.outfieldapp.outfieldbackend.api.Constants.Headers;
 import com.outfieldapp.outfieldbackend.api.Constants.Params;
 import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
 import com.outfieldapp.outfieldbackend.api.response.InteractionsResponse;
+import com.outfieldapp.outfieldbackend.models.Comment;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.User;
@@ -66,7 +67,10 @@ public interface ApiService {
         }
     }
 
-    /* User Requests */
+    //#############################################################################################
+    //                                      USER REQUESTS
+    //#############################################################################################
+
     @GET(Endpoints.ME)
     Call<User.Wrapper> getUserDetails();
 
@@ -96,7 +100,10 @@ public interface ApiService {
     // TODO: Upload user image
 
 
-    /* Contact Requests */
+    //#############################################################################################
+    //                                    CONTACT REQUESTS
+    //#############################################################################################
+
     @GET(Endpoints.MY_CONTACTS)
     Call<ContactsResponse> getPlaces(
             @Query(Params.Contacts.CONTACT_TYPE) String contactType,
@@ -161,7 +168,11 @@ public interface ApiService {
 
     // TODO: upload contact image
 
-    /* Interaction Requests */
+
+    //#############################################################################################
+    //                                  INTERACTION REQUESTS
+    //#############################################################################################
+
     @GET(Endpoints.INTERACTIONS)
     Call<InteractionsResponse> getInteractions(
             @Query(Params.Interactions.ONLY_ME) boolean onlyMe,
@@ -192,4 +203,27 @@ public interface ApiService {
             @Path("id") long id
     );
 
+    // TODO: Upload interaction images
+
+
+    //#############################################################################################
+    //                                     COMMENT REQUESTS
+    //#############################################################################################
+
+    @POST(Endpoints.INTERACTIONS + "/{id}/comments")
+    Call<Comment.Wrapper> createComment(
+            @Path("id") long interactionId,
+            @Body Comment.Wrapper comment
+    );
+
+    @PUT(Endpoints.COMMENTS + "/{id}")
+    Call<Comment.Wrapper> updateComment(
+            @Path("id") long commentId,
+            @Body Comment.Wrapper comment
+    );
+
+    @DELETE(Endpoints.COMMENTS + "/{id}")
+    Call<Void> deleteComment(
+            @Path("id") long commentId
+    );
 }
