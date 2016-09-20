@@ -3,10 +3,12 @@ package com.outfieldapp.outfieldbackend;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.outfieldapp.outfieldbackend.api.OutfieldApi;
 import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
 import com.outfieldapp.outfieldbackend.models.Phone;
+import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        OutfieldApi.signIn("tim.havelka@gmail.com", "fortune1", new OutfieldApi.ResponseCallback<User>() {
+            @Override
+            public void onResponse(boolean success, User object) {
+
+            }
+        });
     }
 
     public Contact getSampleContact() {

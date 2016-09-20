@@ -220,6 +220,17 @@ public class Contact extends Model {
         return rows > 0;
     }
 
+    public boolean delete() {
+        if (rowId <= 0) return false;
+        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+        int rows = db.delete(
+                OutfieldContract.Contact.TABLE_NAME,
+                OutfieldContract.Contact._ID,
+                new String[]{String.valueOf(rowId)}
+        );
+        return rows > 0;
+    }
+
     @Override
     protected void loadFromCursor(Cursor cursor) {
         try {

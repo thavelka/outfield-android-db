@@ -26,7 +26,7 @@ import retrofit2.http.Query;
 
 public interface ApiService {
 
-    public static class Builder {
+    class Builder {
 
         private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         private static Retrofit.Builder builder =
@@ -88,6 +88,9 @@ public interface ApiService {
     @PUT(Endpoints.ME)
     Call<User.Wrapper> updateUser(@Body User.Wrapper user);
 
+    @POST(Endpoints.PASSWORD_RESET)
+    Call<Void> resetPassword(@Query(Params.PasswordReset.EMAIL) String email);
+
 
     /* Contact Requests */
     @GET(Endpoints.MY_CONTACTS)
@@ -96,7 +99,9 @@ public interface ApiService {
             @Query(Params.Contacts.SEARCH) String search,
             @Query(Params.Contacts.PER_PAGE) Integer perPage,
             @Query(Params.Contacts.PAGE) Integer page,
-            @Query(Params.Contacts.GLOBAL) Boolean global
+            @Query(Params.Contacts.GLOBAL) Boolean global,
+            @Query(Params.Contacts.LOCATION) String location,
+            @Query(Params.Contacts.RADIUS) Integer radius
     );
 
     @GET(Endpoints.CONTACTS)
@@ -110,18 +115,18 @@ public interface ApiService {
 
     @GET(Endpoints.CONTACTS + "/{id}")
     Call<Contact.Wrapper> getContact(
-            @Path("id") Integer id
+            @Path("id") Long id
     );
 
     @GET(Endpoints.EXPLORE)
-    Call<Contact.Wrapper> explore(
+    Call<ContactsResponse> explore(
             @Query(Params.Explore.LOCATION) String location,
             @Query(Params.Explore.QUERY) String search
     );
 
     @POST(Endpoints.MY_CONTACTS)
     Call<Contact.Wrapper> favorContact(
-            @Query(Params.Contacts.CONTACT_ID) Integer contactId
+            @Query(Params.Contacts.CONTACT_ID) Long contactId
     );
 
     @POST(Endpoints.MY_CONTACTS)
@@ -142,11 +147,11 @@ public interface ApiService {
 
     @DELETE(Endpoints.MY_CONTACTS + "/{id}")
     Call<Contact.Wrapper> unfavorContact(
-            @Path("id") Integer id
+            @Path("id") Long id
     );
 
     @DELETE(Endpoints.CONTACTS + "/{id}")
     Call deleteContact(
-            @Path("id") Integer id
+            @Path("id") Long id
     );
 }

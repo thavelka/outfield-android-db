@@ -1,8 +1,12 @@
 package com.outfieldapp.outfieldbackend.api;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.OutfieldApp;
+import com.outfieldapp.outfieldbackend.database.OutfieldContract;
+import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
@@ -27,10 +31,10 @@ public class SyncController {
     private boolean userInfoCurrent;
     private String syncToken = "";
 
-    private List<Integer> pendingContacts = new ArrayList<>();
-    private List<Integer> pendingInteractions = new ArrayList<>();
-    private List<Integer> pendingComments = new ArrayList<>();
-    private List<Integer> pendingImages = new ArrayList<>();
+    private List<Long> pendingContacts = new ArrayList<>();
+    private List<Long> pendingInteractions = new ArrayList<>();
+    private List<Long> pendingComments = new ArrayList<>();
+    private List<Long> pendingImages = new ArrayList<>();
 
 
     public void doSync() {
@@ -96,6 +100,57 @@ public class SyncController {
     }
 
     private void syncContacts() {
+        List<Contact> deletedContacts = new ArrayList<>();
+        List<Contact> createdContacts = new ArrayList<>();
+        List<Contact> updatedContacts = new ArrayList<>();
+        List<Contact> favoredContacts = new ArrayList<>();
+
+        // Get dirty contacts
+        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+        Cursor cursor = db.query(
+                OutfieldContract.Contact.TABLE_NAME,
+                null,
+                OutfieldContract.Contact.DIRTY + "=?",
+                new String[]{"1"},
+                null, null, null
+        );
+
+        // Sort dirty contacts
+        while (cursor != null && cursor.moveToNext()) {
+            Contact contact = new Contact(cursor);
+            long id = contact.getId();
+            if (pendingContacts.contains(id)) {
+                continue;
+            }
+            pendingContacts.add(id);
+            if (contact.isDirty()) {
+                deletedContacts.add(contact);
+            } else if (id > 0 && contact.isFavored()) {
+                favoredContacts.add(contact);
+            } else if (id > 0) {
+                updatedContacts.add(contact);
+            } else if (id < 0) {
+                createdContacts.add(contact);
+            }
+        }
+        if (cursor != null) cursor.close();
+
+        // Sync deleted contacts
+        for (final Contact contact : deletedContacts) {
+            Call call = OutfieldApp.getApiService().deleteContact(contact.getId());
+            call.enqueue(new Callback() {
+                @Override
+                public void onResponse(Call call, Response response) {
+                    pendingContacts.remove(contact.getId());
+                    contact.delete();
+                }
+
+                @Override
+                public void onFailure(Call call, Throwable t) {
+
+                }
+            });
+        }
 
     }
 
@@ -132,6 +187,6 @@ public class SyncController {
     }
 
     private void reset() {
-        
+
     }
 }
