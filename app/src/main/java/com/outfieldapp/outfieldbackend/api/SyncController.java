@@ -69,7 +69,7 @@ public class SyncController {
      * Gets up-to-date info about the current user and ensures that the user's account is active.
      */
     private void getUserDetails() {
-        OutfieldApi.getUserDetails(new OutfieldApi.ResponseCallback<User>() {
+        OutfieldAPI.getInstance().getUserDetails(new OutfieldAPI.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
                 if (success && object != null) {
@@ -89,7 +89,7 @@ public class SyncController {
     private void syncCurrentUser() {
         final User currentUser = User.getCurrentUser();
         if (currentUser == null || !currentUser.isDirty()) return;
-        OutfieldApi.updateUser(currentUser, new OutfieldApi.ResponseCallback<User>() {
+        OutfieldAPI.getInstance().updateUser(currentUser, new OutfieldAPI.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
                 if (success && object != null) {
@@ -151,7 +151,8 @@ public class SyncController {
 
         // Sync deleted contacts
         for (final Contact contact : deletedContacts) {
-            OutfieldApi.deleteContact(contact.getId(), new OutfieldApi.ResponseCallback<Void>() {
+            OutfieldAPI.getInstance().deleteContact(contact.getId(),
+                    new OutfieldAPI.ResponseCallback<Void>() {
                 @Override
                 public void onResponse(boolean success, Void object) {
                     pendingContacts.remove(contact.getId());
@@ -167,7 +168,8 @@ public class SyncController {
             if (contact.getContactType() == Contact.Type.PLACE) {
                 contact.setImages(new ArrayList<Image>());
             }
-            OutfieldApi.updateAndFavorContact(contact, new OutfieldApi.ResponseCallback<Contact>() {
+            OutfieldAPI.getInstance().updateAndFavorContact(contact,
+                    new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -184,7 +186,8 @@ public class SyncController {
         for (final Contact contact : favoredContacts) {
             final long originalId = contact.getId();
             contact.setId(0);
-            OutfieldApi.createContact(contact, new OutfieldApi.ResponseCallback<Contact>() {
+            OutfieldAPI.getInstance().createContact(contact,
+                    new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -214,7 +217,8 @@ public class SyncController {
             if (contact.getContactType() == Contact.Type.PLACE) {
                 contact.setImages(new ArrayList<Image>());
             }
-            OutfieldApi.updateContact(contact, new OutfieldApi.ResponseCallback<Contact>() {
+            OutfieldAPI.getInstance().updateContact(contact,
+                    new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -257,7 +261,8 @@ public class SyncController {
         final String oldToken = this.syncToken;
         this.syncToken = syncToken;
 
-        OutfieldApi.sync(onlyMe, 50, syncToken, new OutfieldApi.ResponseCallback<SyncResponse>() {
+        OutfieldAPI.getInstance().sync(onlyMe, 50, syncToken,
+                new OutfieldAPI.ResponseCallback<SyncResponse>() {
             @Override
             public void onResponse(boolean success, SyncResponse object) {
 
