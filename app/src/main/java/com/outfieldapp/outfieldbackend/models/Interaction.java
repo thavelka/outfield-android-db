@@ -80,7 +80,7 @@ public class Interaction extends Model {
     public List<Form> getForms() { return forms; }
     public List<FormEntryGroup> getFormEntryGroups() { return formEntryGroups; }
     public List<Comment> getComments() { return comments; }
-    public List<Image> getImage() { return images; }
+    public List<Image> getImages() { return images; }
     public float getDuration() { return interactionDetails.duration; }
     public float getLatitude() { return interactionDetails.getLocation().latitude; }
     public float getLongitude() { return interactionDetails.getLocation().longitude; }
@@ -93,6 +93,7 @@ public class Interaction extends Model {
     }
 
     /* Setters */
+    public void setId(long id) { interactionId = id; }
     public void setInteractionType(Type type) { interactionType = type.toString(); }
     public void setNotes(String notes) { this.notes = notes;}
     public void setDuration(float duration) { interactionDetails.duration = duration; }
@@ -243,6 +244,17 @@ public class Interaction extends Model {
         );
         db.setTransactionSuccessful();
         db.endTransaction();
+        return rows > 0;
+    }
+
+    public boolean delete() {
+        if (rowId <= 0) return false;
+        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+        int rows = db.delete(
+                OutfieldContract.Interaction.TABLE_NAME,
+                OutfieldContract.Interaction._ID + "=?",
+                new String[]{String.valueOf(rowId)}
+        );
         return rows > 0;
     }
 

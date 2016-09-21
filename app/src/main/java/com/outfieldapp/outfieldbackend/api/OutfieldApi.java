@@ -19,7 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Provides static methods for communicating with Outfield REST API asynchronously.
+ * Provides methods for communicating with Outfield REST API asynchronously.
  * A {@link ResponseCallback} is provided as a parameter to any request method to capture the
  * response data and return it to the calling thread.
  *
@@ -47,6 +47,7 @@ public final class OutfieldAPI {
 
     /**
      * Callback used to capture response data.
+     * <p>
      * <code>success</code> will be false if the parameters are invalid or if the HTTP response code
      * is not between 200 and 300.
      * @param <T> The type of object to be returned from the API response.
@@ -386,6 +387,7 @@ public final class OutfieldAPI {
 
     /**
      * <code>POST /api/v2/my_contacts</code>
+     * <p>
      * Add an organization's contact to the current user's “my contacts” list.
      * @param contactId API ID of the contact to be favored.
      * @param callback Callback to receive boolean success value and favored contact.
