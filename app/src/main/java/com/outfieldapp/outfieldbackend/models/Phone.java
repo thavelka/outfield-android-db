@@ -14,8 +14,8 @@ public class Phone extends Model {
 
     public static final String TAG = Phone.class.getSimpleName();
 
-    private long rowId;
-    private long contactId;
+    private transient long rowId;
+    private transient long contactId;
 
     @SerializedName(Keys.Phone.ID)
     private long phoneId;

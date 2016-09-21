@@ -15,8 +15,8 @@ public class Address extends Model {
 
     public static final String TAG = Address.class.getSimpleName();
 
-    private long rowId;
-    private long contactId;
+    private transient long rowId;
+    private transient long contactId;
 
     @SerializedName(Keys.Address.ID)
     private long addressId;

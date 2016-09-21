@@ -18,8 +18,9 @@ public class Contact extends Model {
 
     public static final String TAG = Contact.class.getSimpleName();
 
-    private long rowId;
-    private boolean dirty;
+    private transient long rowId;
+    private transient boolean dirty;
+    private transient boolean destroy;
 
     @SerializedName(Keys.Contact.ID)
     private long contactId;
@@ -35,8 +36,6 @@ public class Contact extends Model {
     private String website = "";
     @SerializedName(Keys.Contact.IS_FAVORED)
     private boolean favored;
-    @SerializedName(Keys.Contact.DESTROY)
-    private boolean destroy;
     @SerializedName(Keys.Contact.ADDRESSES)
     private List<Address> addresses = new ArrayList<>();
     @SerializedName(Keys.Contact.EMAILS)

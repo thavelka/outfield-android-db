@@ -14,12 +14,12 @@ public class Image extends Model {
 
     public static final String TAG = Image.class.getSimpleName();
 
-    private long rowId;
-    private long contactId;
-    private long interactionId;
-    private long userId;
-    private byte[] imageFile;
-    private String uri;
+    private transient long rowId;
+    private transient long contactId;
+    private transient long interactionId;
+    private transient long userId;
+    private transient byte[] imageFile;
+    private transient String uri;
 
     @SerializedName(Keys.Image.ID)
     private long imageId;

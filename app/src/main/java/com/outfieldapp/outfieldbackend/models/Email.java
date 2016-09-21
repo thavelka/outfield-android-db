@@ -14,8 +14,8 @@ public class Email extends Model {
 
     public static final String TAG = Email.class.getSimpleName();
 
-    private long rowId;
-    private long contactId;
+    private transient long rowId;
+    private transient long contactId;
 
     @SerializedName(Keys.Email.ID)
     private long emailId;
