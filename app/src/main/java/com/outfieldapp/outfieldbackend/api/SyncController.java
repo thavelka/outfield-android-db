@@ -17,6 +17,8 @@ import com.outfieldapp.outfieldbackend.models.User;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: Implement Counter class or RxJava
+
 public class SyncController {
     private static final String TAG = SyncController.class.getSimpleName();
     private static SyncController instance = new SyncController();
@@ -231,6 +233,7 @@ public class SyncController {
         List<Interaction> createdInteractions = new ArrayList<>();
         List<Interaction> updatedInteractions = new ArrayList<>();
 
+        // Get dirty interactions
         SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
         Cursor cursor = db.query(
                 OutfieldContract.Interaction.TABLE_NAME,
@@ -393,6 +396,7 @@ public class SyncController {
                 }
 
                 // TODO: Bulk insert contacts and interactions.
+                // TODO: Insert on background thread.
                 // Create/update interactions from server
                 for (Interaction interaction : interactions) {
                     interaction.setDirty(false);
