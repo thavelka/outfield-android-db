@@ -32,6 +32,21 @@ import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
+/**
+ * Provides type-safe interface for building HTTP requests.
+ * Calls defined below will be accessible from an ApiService instance.
+ *
+ * Example call:
+ * <pre>
+ * {@code
+ * @literal @PUT("contacts/{id}"                      // Specifies method and endpoint to use
+ *     Call<Contact.Wrapper> updateContact(      // Response type and name
+ *        @literal @Path("id") long id,                  // What to replace "id" in the endpoint with
+ *        @literal @Body Contact.Wrapper contact         // Type of object used as the request body
+ *     );
+ * }
+ *</pre>
+ */
 public interface ApiService {
 
     class Builder {
