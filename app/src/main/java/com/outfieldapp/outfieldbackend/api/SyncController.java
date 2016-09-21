@@ -16,6 +16,10 @@ import com.outfieldapp.outfieldbackend.models.User;
 import java.util.ArrayList;
 import java.util.List;
 
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 // TODO: Implement Counter class or RxJava
 
 public class SyncController {
@@ -172,23 +176,27 @@ public class SyncController {
         }
 
         // Sync created contacts
-        for (final Contact contact : favoredContacts) {
-            final long originalId = contact.getId();
-            contact.setId(0);
-            OutfieldAPI.createContact(contact, (success, object) -> {
-                if (success && object != null) {
-                    Log.d(TAG, "Created contact on server.");
-                    contact.setId(object.getId());
-                    contact.update();
-
-                    object.setImages(contact.getImages());
-                    object.setDirty(false);
-                    object.save();
-
-                }
-                pendingContacts.remove(originalId);
-            });
-        }
+        Observable.from(createdContacts)
+                .flatMap(contact -> {
+                    Log.d(TAG, "Uploading contact");
+                    final long originalId = contact.getId();
+                    contact.setId(0);
+                    return OutfieldAPI.createContact(contact)
+                            .doOnNext(returnedContact -> {
+                                Log.d(TAG, "Created contact on server.");
+                                contact.setId(returnedContact.getId());
+                                contact.update();
+                                returnedContact.setImages(contact.getImages());
+                                returnedContact.setDirty(false);
+                                returnedContact.save();
+                            })
+                            .doOnCompleted(() -> {
+                                pendingContacts.remove(originalId);
+                            });
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(contact -> {}, throwable -> {}, this::syncContactImages);
 
         // Sync updated contacts
         for (final Contact contact : updatedContacts) {
@@ -288,7 +296,7 @@ public class SyncController {
     }
 
     private void syncContactImages() {
-
+        Log.d(TAG, "SYNC CONTACT IMAGES");
     }
 
     private void syncInteractionImages() {

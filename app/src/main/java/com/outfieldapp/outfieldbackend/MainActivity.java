@@ -1,8 +1,8 @@
 package com.outfieldapp.outfieldbackend;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.api.Constants;
 import com.outfieldapp.outfieldbackend.api.OutfieldAPI;
@@ -11,10 +11,12 @@ import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
 import com.outfieldapp.outfieldbackend.models.Phone;
-import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,21 +27,62 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1",
-                new OutfieldAPI.ResponseCallback<User>() {
-            @Override
-            public void onResponse(boolean success, User object) {
-                if (success && object.getId() > 0) {
-                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
-                    editor.putLong(Constants.Prefs.CURRENT_USER_ID, object.getId());
-                    editor.putString(Constants.Headers.EMAIL, object.getEmail());
-                    editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
-                    editor.commit();
-                    OutfieldAPI.setAuthHeaders(object.getEmail(), object.getToken());
-                    SyncController.getInstance().doSync();
-                }
-            }
-        });
+//        OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1",
+//                new OutfieldAPI.ResponseCallback<User>() {
+//            @Override
+//            public void onResponse(boolean success, User object) {
+//                if (success && object.getId() > 0) {
+//                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
+//                    editor.putLong(Constants.Prefs.CURRENT_USER_ID, object.getId());
+//                    editor.putString(Constants.Headers.EMAIL, object.getEmail());
+//                    editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
+//                    editor.commit();
+//                    OutfieldAPI.setAuthHeaders(object.getEmail(), object.getToken());
+//                    SyncController.getInstance().doSync();
+//                }
+//            }
+//        });
+
+        signIn();
+    }
+
+    public void signIn() {
+        OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1")
+                .doOnSubscribe(() -> Log.d(TAG, "Signing in"))
+                .doOnCompleted(() -> Log.d(TAG, "Sign in complete"))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(user -> {
+                    if (user != null) {
+                        Log.d(TAG, "Email: " + user.getEmail() + " Token: " + user.getToken());
+                        OutfieldApp.getSharedPrefs().edit()
+                                .putString(Constants.Headers.EMAIL, user.getEmail())
+                                .putString(Constants.Headers.AUTH_TOKEN, user.getToken())
+                                .commit();
+                        OutfieldAPI.setAuthHeaders(user.getEmail(), user.getToken());
+                        runTest();
+                    }
+                }, throwable -> {});
+    }
+
+    public void runTest() {
+        // insert some contacts
+        Contact contact = getSampleContact();
+        contact.setName("NEW BACKEND 1");
+        contact.setDirty(true);
+        contact.save();
+
+        Contact contact1 = getSampleContact();
+        contact1.setName("NEW BACKEND 2");
+        contact1.setDirty(true);
+        contact1.save();
+
+        Contact contact2 = getSampleContact();
+        contact2.setName("NEW BACKEND 3");
+        contact2.setDirty(true);
+        contact2.save();
+
+        SyncController.getInstance().doSync();
     }
 
     public Contact getSampleContact() {

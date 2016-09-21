@@ -23,6 +23,7 @@ import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -31,6 +32,7 @@ import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import rx.Observable;
 
 /**
  * Provides type-safe interface for building HTTP requests.
@@ -81,7 +83,7 @@ public interface ApiService {
             });
 
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
-            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             httpClient.addInterceptor(loggingInterceptor);
 
             OkHttpClient client = httpClient.build();
@@ -89,6 +91,7 @@ public interface ApiService {
             Retrofit.Builder builder =
                     new Retrofit.Builder()
                             .baseUrl(Constants.BASE_URL)
+                            .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                             .addConverterFactory(GsonConverterFactory.create());
             Retrofit retrofit = builder.client(client).build();
             return retrofit.create(ApiService.class);
@@ -106,7 +109,7 @@ public interface ApiService {
     Call<User.Wrapper> getAccountExists(@Query(Params.AccountExists.EMAIL) String email);
 
     @POST(Endpoints.SIGN_IN)
-    Call<User.Wrapper> signIn(
+    rx.Observable<User.Wrapper> signIn(
             @Query(Params.SignIn.EMAIL) String email,
             @Query(Params.SignIn.PASSWORD) String password);
 
@@ -174,7 +177,7 @@ public interface ApiService {
     );
 
     @POST(Endpoints.CONTACTS)
-    Call<Contact.Wrapper> createContact(
+    Observable<Contact.Wrapper> createContact(
             @Body Contact.Wrapper contact
     );
 

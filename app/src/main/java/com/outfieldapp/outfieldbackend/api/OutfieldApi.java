@@ -17,6 +17,7 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import rx.Observable;
 
 /**
  * Provides static methods for communicating with Outfield REST API asynchronously.
@@ -56,32 +57,27 @@ public final class OutfieldAPI {
         public void onResponse(boolean success, T object);
     }
 
+//    /**
+//     * <code>POST /api/v2/sign_in</code>
+//     * <p>
+//     * Sends login request to server, which responds with a user object containg the user's info.
+//     * @param email The user's email address.
+//     * @param password The user's password.
+//     * @param callback Callback to receive boolean success value and user object.
+//     */
+
     /**
      * <code>POST /api/v2/sign_in</code>
-     * <p>
-     * Sends login request to server, which responds with a user object containg the user's info.
+     * Sends login request to server, which responds with a {@link User} object containing the
+     * user's info. If an error is encountered, the user will be null.
      * @param email The user's email address.
-     * @param password The user's password.
-     * @param callback Callback to receive boolean success value and user object.
+     * @param password The user's password
+     * @return Observable containing the user object.
      */
-    public static void signIn(String email, String password, final ResponseCallback<User> callback) {
-        Call<User.Wrapper> call = apiService.signIn(email, password);
-        call.enqueue(new Callback<User.Wrapper>() {
-            @Override
-            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getUser());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during signIn", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Observable<User> signIn(String email, String password) {
+        return apiService.signIn(email, password)
+                .doOnError(throwable -> Log.e(TAG, "Error during signIn", throwable))
+                .map(User.Wrapper::getUser);
     }
 
     /**
@@ -489,46 +485,52 @@ public final class OutfieldAPI {
         });
     }
 
-    /**
-     * <code>POST /api/v2/contacts</code>
-     * <p>
-     * Creates a contact on the server with the properties of the attached contact.
-     * This method should not be used if the contact already has an ID. If the contact has an ID,
-     * it already exists on the server and should be updated using {@link #updateContact}.
-     * @param contact The contact to be uploaded.
-     * @param callback Callback to receive the boolean success value and returned new contact.
-     */
-    public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
+//    /**
+//     * <code>POST /api/v2/contacts</code>
+//     * <p>
+//     * Creates a contact on the server with the properties of the attached contact.
+//     * This method should not be used if the contact already has an ID. If the contact has an ID,
+//     * it already exists on the server and should be updated using {@link #updateContact}.
+//     * @param contact The contact to be uploaded.
+//     * @param callback Callback to receive the boolean success value and returned new contact.
+//     */
+//    public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
+//
+//        if (contact.getId() >= 0) {
+//            Log.e(TAG, "Contact already exists on server.");
+//            callback.onResponse(false, null);
+//            return;
+//        }
+//
+//        if (contact.getContactType() == null) {
+//            Log.e(TAG, "Contact must have type.");
+//            callback.onResponse(false, null);
+//            return;
+//        }
+//
+//        Call<Contact.Wrapper> call = apiService.createContact(contact.wrap());
+//        call.enqueue(new Callback<Contact.Wrapper>() {
+//            @Override
+//            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
+//                if (response.isSuccessful()) {
+//                    callback.onResponse(true, response.body().getContact());
+//                } else {
+//                    onFailure(call, new Exception("Status code: " + response.code()));
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
+//                Log.e(TAG, "Error during createContact", t);
+//                callback.onResponse(false, null);
+//            }
+//        });
+//    }
 
-        if (contact.getId() >= 0) {
-            Log.e(TAG, "Contact already exists on server.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        if (contact.getContactType() == null) {
-            Log.e(TAG, "Contact must have type.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Contact.Wrapper> call = apiService.createContact(contact.wrap());
-        call.enqueue(new Callback<Contact.Wrapper>() {
-            @Override
-            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContact());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during createContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Observable<Contact> createContact(Contact contact) {
+        return apiService.createContact(contact.wrap())
+                .doOnError(throwable -> Log.e(TAG, "Error during createContact", throwable))
+                .map(Contact.Wrapper::getContact);
     }
 
     /**
