@@ -115,7 +115,7 @@ public final class OutfieldApi {
                 if (response.isSuccessful()) {
                     callback.onResponse(true, response.body().getUser());
                 } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
+                    onFailure(call, new Exception("Status code: " + response.code() + "\nMessage: " + response.message()));
                 }
             }
 

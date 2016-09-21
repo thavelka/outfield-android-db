@@ -14,11 +14,13 @@ import com.outfieldapp.outfieldbackend.models.Notification;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -34,17 +36,16 @@ public interface ApiService {
 
     class Builder {
 
-        private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-        private static Retrofit.Builder builder =
-                new Retrofit.Builder()
-                        .baseUrl(Constants.BASE_URL)
-                        .addConverterFactory(GsonConverterFactory.create());
-
         public static ApiService createService() {
             return createService(null, null);
         }
 
         public static ApiService createService(final String email, final String token) {
+            OkHttpClient.Builder httpClient =
+                    new OkHttpClient.Builder()
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS);
+
             httpClient.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -64,7 +65,16 @@ public interface ApiService {
                 }
             });
 
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+            httpClient.addInterceptor(loggingInterceptor);
+
             OkHttpClient client = httpClient.build();
+
+            Retrofit.Builder builder =
+                    new Retrofit.Builder()
+                            .baseUrl(Constants.BASE_URL)
+                            .addConverterFactory(GsonConverterFactory.create());
             Retrofit retrofit = builder.client(client).build();
             return retrofit.create(ApiService.class);
         }

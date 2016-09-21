@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.outfieldapp.outfieldbackend.api.Constants;
 import com.outfieldapp.outfieldbackend.api.OutfieldApi;
-import com.outfieldapp.outfieldbackend.api.response.ContactsResponse;
+import com.outfieldapp.outfieldbackend.api.SyncController;
 import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
@@ -34,18 +34,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString(Constants.Headers.EMAIL, object.getEmail());
                     editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
                     editor.commit();
-                    getContacts();
-                }
-            }
-        });
-    }
-
-    public void getContacts() {
-        OutfieldApi.getPeople(null, null, null, null, new OutfieldApi.ResponseCallback<ContactsResponse>() {
-            @Override
-            public void onResponse(boolean success, ContactsResponse object) {
-                if (success) {
-                    List<Contact> contact = object.getContacts();
+                    SyncController.getInstance().doSync();
                 }
             }
         });

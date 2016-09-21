@@ -147,8 +147,9 @@ public class Interaction extends Model {
      * @return True if save was successful.
      */
     public boolean save() {
-        // Insert interaction
-        insert();
+
+        if (interactionType.equalsIgnoreCase("planned_check_in")
+                || interactionType.equalsIgnoreCase("planned_meeting")) return false;
 
         // Insert user
         if (user != null) user.save();
@@ -163,9 +164,14 @@ public class Interaction extends Model {
             form.save();
         }
 
+        // Insert interaction
+        insert();
+
         // Insert form entries
         for (FormEntryGroup group : formEntryGroups) {
             for (FormEntry entry : group.getFormEntries()) {
+                entry.setInteractionId(interactionId);
+                entry.setFormId(group.getFormId());
                 entry.insert();
             }
         }
@@ -187,7 +193,8 @@ public class Interaction extends Model {
 
     @Override
     protected boolean insert() {
-        if (contactIds.isEmpty()) {
+
+        if (contacts.isEmpty() && contactIds.isEmpty()) {
             Log.e(TAG, "Object has no parent");
             return false;
         }
@@ -392,7 +399,9 @@ public class Interaction extends Model {
         }
 
         // Put contact values
-        if (!contacts.isEmpty() && contacts.get(0).getId() != 0) {
+        if (!contactIds.isEmpty()) {
+            values.put(OutfieldContract.Interaction.CONTACT_ID, contactIds.get(0));
+        } else if (!contacts.isEmpty() && contacts.get(0).getId() != 0) {
             values.put(OutfieldContract.Interaction.CONTACT_ID, contacts.get(0).getId());
         }
 
