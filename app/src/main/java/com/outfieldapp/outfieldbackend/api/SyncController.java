@@ -70,7 +70,7 @@ public class SyncController {
      * Gets up-to-date info about the current user and ensures that the user's account is active.
      */
     private void getUserDetails() {
-        OutfieldAPI.getInstance().getUserDetails(new OutfieldAPI.ResponseCallback<User>() {
+        OutfieldAPI.getUserDetails(new OutfieldAPI.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
                 if (success && object != null) {
@@ -90,7 +90,7 @@ public class SyncController {
     private void syncCurrentUser() {
         final User currentUser = User.getCurrentUser();
         if (currentUser == null || !currentUser.isDirty()) return;
-        OutfieldAPI.getInstance().updateUser(currentUser, new OutfieldAPI.ResponseCallback<User>() {
+        OutfieldAPI.updateUser(currentUser, new OutfieldAPI.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
                 if (success && object != null) {
@@ -152,7 +152,7 @@ public class SyncController {
 
         // Sync deleted contacts
         for (final Contact contact : deletedContacts) {
-            OutfieldAPI.getInstance().deleteContact(contact.getId(), new OutfieldAPI.ResponseCallback<Void>() {
+            OutfieldAPI.deleteContact(contact.getId(), new OutfieldAPI.ResponseCallback<Void>() {
                 @Override
                 public void onResponse(boolean success, Void object) {
                     if (success) {
@@ -169,7 +169,7 @@ public class SyncController {
             if (contact.getContactType() == Contact.Type.PLACE) {
                 contact.setImages(new ArrayList<Image>());
             }
-            OutfieldAPI.getInstance().updateAndFavorContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
+            OutfieldAPI.updateAndFavorContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -186,7 +186,7 @@ public class SyncController {
         for (final Contact contact : favoredContacts) {
             final long originalId = contact.getId();
             contact.setId(0);
-            OutfieldAPI.getInstance().createContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
+            OutfieldAPI.createContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -209,7 +209,7 @@ public class SyncController {
             if (contact.getContactType() == Contact.Type.PLACE) {
                 contact.setImages(new ArrayList<Image>());
             }
-            OutfieldAPI.getInstance().updateContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
+            OutfieldAPI.updateContact(contact, new OutfieldAPI.ResponseCallback<Contact>() {
                 @Override
                 public void onResponse(boolean success, Contact object) {
                     if (success && object != null) {
@@ -260,7 +260,7 @@ public class SyncController {
 
         // Sync deleted interactions
         for (final Interaction interaction : deletedInteractions) {
-            OutfieldAPI.getInstance().deleteInteraction(interaction.getId(), new OutfieldAPI.ResponseCallback<Void>() {
+            OutfieldAPI.deleteInteraction(interaction.getId(), new OutfieldAPI.ResponseCallback<Void>() {
                 @Override
                 public void onResponse(boolean success, Void object) {
                     if (success) {
@@ -276,7 +276,7 @@ public class SyncController {
         for (final Interaction interaction : createdInteractions) {
             final long originalId = interaction.getId();
             interaction.setId(0);
-            OutfieldAPI.getInstance().createInteraction(interaction, new OutfieldAPI.ResponseCallback<Interaction>() {
+            OutfieldAPI.createInteraction(interaction, new OutfieldAPI.ResponseCallback<Interaction>() {
                 @Override
                 public void onResponse(boolean success, Interaction object) {
                     if (success && object != null) {
@@ -296,7 +296,7 @@ public class SyncController {
 
         // Sync updated interactions
         for (final Interaction interaction : updatedInteractions) {
-            OutfieldAPI.getInstance().updateInteraction(interaction, new OutfieldAPI.ResponseCallback<Interaction>() {
+            OutfieldAPI.updateInteraction(interaction, new OutfieldAPI.ResponseCallback<Interaction>() {
                 @Override
                 public void onResponse(boolean success, Interaction object) {
                     if (success && object != null) {
@@ -332,7 +332,7 @@ public class SyncController {
      * Retrieves and inserts organization's current interaction forms.
      */
     private void syncForms() {
-        OutfieldAPI.getInstance().getLatestForms(new OutfieldAPI.ResponseCallback<List<Form>>() {
+        OutfieldAPI.getLatestForms(new OutfieldAPI.ResponseCallback<List<Form>>() {
             @Override
             public void onResponse(boolean success, List<Form> object) {
                 if (success && object != null) {
@@ -355,7 +355,7 @@ public class SyncController {
         final String oldToken = this.syncToken;
         this.syncToken = syncToken;
 
-        OutfieldAPI.getInstance().sync(onlyMe, 50, syncToken, new OutfieldAPI.ResponseCallback<SyncResponse>() {
+        OutfieldAPI.sync(onlyMe, 50, syncToken, new OutfieldAPI.ResponseCallback<SyncResponse>() {
             @Override
             public void onResponse(boolean success, SyncResponse object) {
 
@@ -392,6 +392,7 @@ public class SyncController {
                     deletedInteractions.addAll(object.getInteractions().getDeletedInteractionIds());
                 }
 
+                // TODO: Bulk insert contacts and interactions.
                 // Create/update interactions from server
                 for (Interaction interaction : interactions) {
                     interaction.setDirty(false);

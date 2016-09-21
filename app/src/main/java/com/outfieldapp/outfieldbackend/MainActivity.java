@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        OutfieldAPI.getInstance().signIn("tim.havelka@gmail.com", "fortune1",
+        OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1",
                 new OutfieldAPI.ResponseCallback<User>() {
             @Override
             public void onResponse(boolean success, User object) {
@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
                     editor.putString(Constants.Headers.EMAIL, object.getEmail());
                     editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
                     editor.commit();
-                    OutfieldAPI.getInstance().setAuthHeaders(object.getEmail(), object.getToken());
+                    OutfieldAPI.setAuthHeaders(object.getEmail(), object.getToken());
                     SyncController.getInstance().doSync();
                 }
             }

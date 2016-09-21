@@ -19,7 +19,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Provides methods for communicating with Outfield REST API asynchronously.
+ * Provides static methods for communicating with Outfield REST API asynchronously.
  * A {@link ResponseCallback} is provided as a parameter to any request method to capture the
  * response data and return it to the calling thread.
  *
@@ -29,15 +29,15 @@ public final class OutfieldAPI {
 
     public static final String TAG = OutfieldAPI.class.getSimpleName();
 
-    private ApiService apiService = ApiService.Builder.createService();
-    private static OutfieldAPI instance = new OutfieldAPI();
+    private static ApiService apiService = ApiService.Builder.createService();
     private OutfieldAPI() {}
 
-    public static OutfieldAPI getInstance() {
-        return instance;
-    }
-
-    public void setAuthHeaders(String email, String token) {
+    /**
+     * Recreates HTTP client with X-User-Email and X-Auth-Token headers.
+     * @param email The user's email.
+     * @param token The user's auth token.
+     */
+    public static void setAuthHeaders(String email, String token) {
         apiService = ApiService.Builder.createService(email, token);
     }
 
@@ -64,7 +64,7 @@ public final class OutfieldAPI {
      * @param password The user's password.
      * @param callback Callback to receive boolean success value and user object.
      */
-    public void signIn(String email, String password, final ResponseCallback<User> callback) {
+    public static void signIn(String email, String password, final ResponseCallback<User> callback) {
         Call<User.Wrapper> call = apiService.signIn(email, password);
         call.enqueue(new Callback<User.Wrapper>() {
             @Override
@@ -92,7 +92,7 @@ public final class OutfieldAPI {
      * @param email The user's email address.
      * @param callback Callback to receive boolean success value and user object.
      */
-    public void getAccountExists(String email, final ResponseCallback<User> callback) {
+    public static void getAccountExists(String email, final ResponseCallback<User> callback) {
         Call<User.Wrapper> call = apiService.getAccountExists(email);
         call.enqueue(new Callback<User.Wrapper>() {
             @Override
@@ -118,7 +118,7 @@ public final class OutfieldAPI {
      * Retrieves detailed information about user.
      * @param callback Callback to receive boolean success value and user object.
      */
-    public void getUserDetails(final ResponseCallback<User> callback) {
+    public static void getUserDetails(final ResponseCallback<User> callback) {
         Call<User.Wrapper> call = apiService.getUserDetails();
         call.enqueue(new Callback<User.Wrapper>() {
             @Override
@@ -145,7 +145,7 @@ public final class OutfieldAPI {
      * @param user The user object to be sent to the server.
      * @param callback Callback to receive boolean success value and user object.
      */
-    public void updateUser(User user, final ResponseCallback<User> callback) {
+    public static void updateUser(User user, final ResponseCallback<User> callback) {
         Call<User.Wrapper> call = apiService.updateUser(user.wrap());
         call.enqueue(new Callback<User.Wrapper>() {
             @Override
@@ -175,7 +175,7 @@ public final class OutfieldAPI {
      * @param orgName Name of the organization to be created.
      * @param callback Callback to receive boolean success value and user object.
      */
-    public void signUp(String email, String name, String password,
+    public static void signUp(String email, String name, String password,
                               String orgName, final ResponseCallback<User> callback) {
         Call<User.Wrapper> call = apiService
                 .signUp(email, name, password, password, orgName);
@@ -204,7 +204,7 @@ public final class OutfieldAPI {
      * @param email The user's email address.
      * @param callback Callback to receive boolean success value.
      */
-    public void resetPassword(String email, final ResponseCallback<Void> callback) {
+    public static void resetPassword(String email, final ResponseCallback<Void> callback) {
         Call<Void> call = apiService.resetPassword(email);
         call.enqueue(new Callback<Void>() {
             @Override
@@ -240,7 +240,7 @@ public final class OutfieldAPI {
      * @param search Search contacts for the given query. Can be null.
      * @param callback Callback to receive boolean success value and response.
      */
-    public void getPeople(Integer page, Integer perPage, Boolean global, String search,
+    public static void getPeople(Integer page, Integer perPage, Boolean global, String search,
                                  final ResponseCallback<ContactsResponse> callback) {
         // Set default parameter values
         if (page == null) page = 1;
@@ -280,7 +280,7 @@ public final class OutfieldAPI {
      * @param radius Radius in miles, used to get nearby places. (optional)
      * @param callback Callback to receive boolean success value and response.
      */
-    public void getPlaces(Integer page, Integer perPage, Boolean global, String search,
+    public static void getPlaces(Integer page, Integer perPage, Boolean global, String search,
                                  Double latitude, Double longitude, Integer radius,
                                  final ResponseCallback<ContactsResponse> callback) {
 
@@ -324,7 +324,7 @@ public final class OutfieldAPI {
      * @param search Search for something nearby (e.g. “GNC”). (optional)
      * @param callback Callback to receive boolean success value and contacts array.
      */
-    public void explore(Double latitude, Double longitude, String search,
+    public static void explore(Double latitude, Double longitude, String search,
                                final ResponseCallback<List<Contact>> callback) {
 
         String location = null;
@@ -358,7 +358,7 @@ public final class OutfieldAPI {
      * @param contactId API ID of the contact to be retrieved.
      * @param callback Callback to received boolean success value and retrieved contact.
      */
-    public void getContact(long contactId, final ResponseCallback<Contact> callback) {
+    public static void getContact(long contactId, final ResponseCallback<Contact> callback) {
 
         if (contactId <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
@@ -392,7 +392,7 @@ public final class OutfieldAPI {
      * @param contactId API ID of the contact to be favored.
      * @param callback Callback to receive boolean success value and favored contact.
      */
-    public void favorContact(long contactId, final ResponseCallback<Contact> callback) {
+    public static void favorContact(long contactId, final ResponseCallback<Contact> callback) {
 
         if (contactId <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
@@ -427,7 +427,7 @@ public final class OutfieldAPI {
      * @param contact Contact object to be favored and updated.
      * @param callback Callback to receive boolean success value and updated contact.
      */
-    public void updateAndFavorContact(Contact contact, final ResponseCallback<Contact> callback) {
+    public static void updateAndFavorContact(Contact contact, final ResponseCallback<Contact> callback) {
 
         if (contact.getId() <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
@@ -462,7 +462,7 @@ public final class OutfieldAPI {
      * @param contactId API ID of the contact to be unfavored.
      * @param callback Callback to receive boolean success value.
      */
-    public void unfavorContact(long contactId, final ResponseCallback<Void> callback) {
+    public static void unfavorContact(long contactId, final ResponseCallback<Void> callback) {
 
         if (contactId <= 0) {
             Log.e(TAG, "Contact ID must be greater than 0.");
@@ -498,7 +498,7 @@ public final class OutfieldAPI {
      * @param contact The contact to be uploaded.
      * @param callback Callback to receive the boolean success value and returned new contact.
      */
-    public void createContact(Contact contact, final ResponseCallback<Contact> callback) {
+    public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
 
         if (contact.getId() >= 0) {
             Log.e(TAG, "Contact already exists on server.");
@@ -541,7 +541,7 @@ public final class OutfieldAPI {
      * @param contact The contact to be uploaded.
      * @param callback Callback to receive the boolean success value and returned new contact.
      */
-    public void updateContact(Contact contact, final ResponseCallback<Contact> callback) {
+    public static void updateContact(Contact contact, final ResponseCallback<Contact> callback) {
 
         if (contact.getId() <= 0) {
             Log.e(TAG, "Contact does not exist on server.");
@@ -584,7 +584,7 @@ public final class OutfieldAPI {
      * @param contactId API ID of the contact to be deleted.
      * @param callback Callback to receive boolean success value.
      */
-    public void deleteContact(long contactId, final ResponseCallback<Void> callback) {
+    public static void deleteContact(long contactId, final ResponseCallback<Void> callback) {
 
         if (contactId <= 0) {
             Log.e(TAG, "Contact does not exist on server.");
@@ -627,7 +627,7 @@ public final class OutfieldAPI {
      * @param search Search interactions for provided text. (optional)
      * @param callback Callback to receive boolean success value and response.
      */
-    public void getInteractions(boolean onlyMe, Integer page, Integer perPage,
+    public static void getInteractions(boolean onlyMe, Integer page, Integer perPage,
                                            Interaction.Type interactionType, String search,
                                            final ResponseCallback<InteractionsResponse> callback) {
 
@@ -663,7 +663,7 @@ public final class OutfieldAPI {
      * @param interactionId API ID of interaction to be retrieved.
      * @param callback Callback to receive boolean success value and retrieved contact.
      */
-    public void getInteraction(long interactionId, final ResponseCallback<Interaction> callback) {
+    public static void getInteraction(long interactionId, final ResponseCallback<Interaction> callback) {
 
         if (interactionId <= 0) {
             Log.e(TAG, "Interaction does not exist on server.");
@@ -700,7 +700,7 @@ public final class OutfieldAPI {
      * @param interaction The interaction to be uploaded.
      * @param callback Callback to receive boolean success value and created interaction.
      */
-    public void createInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
+    public static void createInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
 
         if (interaction.getId() > 0) {
             Log.e(TAG, "Interaction already exists on server");
@@ -743,7 +743,7 @@ public final class OutfieldAPI {
      * @param interaction The interaction to be updated.
      * @param callback Callback to receive boolean success value and updated interaction.
      */
-    public void updateInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
+    public static void updateInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
 
         if (interaction.getId() <= 0) {
             Log.e(TAG, "Interaction does not exist on server");
@@ -786,7 +786,7 @@ public final class OutfieldAPI {
      * @param interactionId API ID of the interaction to be deleted.
      * @param callback Callback to receive boolean success value.
      */
-    public void deleteInteraction(long interactionId, final ResponseCallback<Void> callback) {
+    public static void deleteInteraction(long interactionId, final ResponseCallback<Void> callback) {
 
         if (interactionId <= 0) {
             Log.e(TAG, "Interaction does not exist on server.");
@@ -830,7 +830,7 @@ public final class OutfieldAPI {
      * @param comment The comment to be uploaded.
      * @param callback Callback to receive boolean success value and created comment.
      */
-    public void createComment(Comment comment, final ResponseCallback<Comment> callback) {
+    public static void createComment(Comment comment, final ResponseCallback<Comment> callback) {
 
         if (comment.getId() > 0) {
             Log.e(TAG, "Comment already exists on server.");
@@ -873,7 +873,7 @@ public final class OutfieldAPI {
      * @param comment The comment to be updated.
      * @param callback Callback to receive boolean success value and updated comment.
      */
-    public void updateComment(Comment comment, final ResponseCallback<Comment> callback) {
+    public static void updateComment(Comment comment, final ResponseCallback<Comment> callback) {
 
         if (comment.getId() <= 0) {
             Log.e(TAG, "Comment does not exist on server.");
@@ -909,7 +909,7 @@ public final class OutfieldAPI {
      * @param commentId API ID of the comment to be deleted.
      * @param callback Callback to receive boolean success value.
      */
-    public void deleteComment(long commentId, final ResponseCallback<Void> callback) {
+    public static void deleteComment(long commentId, final ResponseCallback<Void> callback) {
 
         if (commentId <= 0) {
             Log.e(TAG, "Comment does not exist on server.");
@@ -945,7 +945,7 @@ public final class OutfieldAPI {
      * Retrieves all current interaction forms.
      * @param callback Callback to receive boolean success value and array of forms
      */
-    public void getLatestForms(final ResponseCallback<List<Form>> callback) {
+    public static void getLatestForms(final ResponseCallback<List<Form>> callback) {
         Call<Form.ArrayWrapper> call = apiService.getLatestForms();
         call.enqueue(new Callback<Form.ArrayWrapper>() {
             @Override
@@ -972,7 +972,7 @@ public final class OutfieldAPI {
      * @param formId API ID of form to be retrieved.
      * @param callback Callback to receive boolean success value and retrieved form.
      */
-    public void getForm(long formId, final ResponseCallback<Form> callback) {
+    public static void getForm(long formId, final ResponseCallback<Form> callback) {
 
         if (formId <= 0) {
             Log.e(TAG, "Form does not exist on server");
@@ -1009,7 +1009,7 @@ public final class OutfieldAPI {
      * Retrieves latest page of notifications for user
      * @param callback Callback to receive boolean success value and array of notifications.
      */
-    public void getNotifications(final ResponseCallback<List<Notification>> callback) {
+    public static void getNotifications(final ResponseCallback<List<Notification>> callback) {
         Call<Notification.ArrayWrapper> call = apiService.getNotifications();
         call.enqueue(new Callback<Notification.ArrayWrapper>() {
             @Override
@@ -1042,7 +1042,7 @@ public final class OutfieldAPI {
      * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
      * @param callback Callback to receive boolean success value and {@link SyncResponse}.
      */
-    public void sync(Boolean onlyMe, Integer perSync, String syncToken,
+    public static void sync(Boolean onlyMe, Integer perSync, String syncToken,
                             final ResponseCallback<SyncResponse> callback) {
 
         // Set default params
