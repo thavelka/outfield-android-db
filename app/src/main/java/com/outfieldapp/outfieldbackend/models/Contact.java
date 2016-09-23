@@ -225,7 +225,7 @@ public class Contact extends Model {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         int rows = db.delete(
                 OutfieldContract.Contact.TABLE_NAME,
-                OutfieldContract.Contact._ID,
+                OutfieldContract.Contact._ID + "=?",
                 new String[]{String.valueOf(rowId)}
         );
         return rows > 0;
