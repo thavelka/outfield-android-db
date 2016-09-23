@@ -474,7 +474,7 @@ public final class OutfieldAPI {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() || response.code() == 404) {
                     callback.onResponse(true, null);
                 } else {
                     onFailure(call, new Exception("Status code: " + response.code()));
@@ -596,7 +596,7 @@ public final class OutfieldAPI {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() || response.code() == 404) {
                     callback.onResponse(true, null);
                 } else {
                     onFailure(call, new Exception("Status code: " + response.code()));
@@ -798,7 +798,7 @@ public final class OutfieldAPI {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() || response.code() == 404) {
                     callback.onResponse(true, null);
                 } else {
                     onFailure(call, new Exception("Status code: " + response.code()));
@@ -920,7 +920,7 @@ public final class OutfieldAPI {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() || response.code() == 404) {
                     callback.onResponse(true, null);
                 } else {
                     onFailure(call, new Exception("Status code: " + response.code()));
