@@ -9,7 +9,6 @@ import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Form;
-import com.outfieldapp.outfieldbackend.models.Image;
 import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.User;
 
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 // TODO: Implement Counter class or RxJava
@@ -37,11 +35,31 @@ public class SyncController {
     private boolean userInfoCurrent;
     private String syncToken = "";
 
-    private List<Long> pendingContacts = new ArrayList<>();
-    private List<Long> pendingInteractions = new ArrayList<>();
-    private List<Long> pendingComments = new ArrayList<>();
-    private List<Long> pendingImages = new ArrayList<>();
+    public void doSync1() {
+        if (isSyncing) return;
+        if (!userInfoCurrent) {
+            getUserDetails();
+            return;
+        }
 
+        Log.d(TAG, "Starting sync");
+        // TODO: Send broadcast intent
+
+        SharedPreferences prefs = OutfieldApp.getSharedPrefs();
+        String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
+
+        isSyncing = true;
+        progress = 0;
+        syncTotal = 0;
+        userInfoCurrent = false;
+
+        syncCurrentUser();
+        syncForms();
+        syncContacts1()
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(aBoolean -> {}, throwable -> {}, () -> sync(false, syncToken));
+    }
 
     public void doSync() {
         if (isSyncing) return;
@@ -65,7 +83,7 @@ public class SyncController {
         syncForms();
         syncContacts();
         syncInteractions();
-        syncContactImages();
+        //syncContactImages();
         syncInteractionImages();
         syncComments();
         sync(false, syncToken);
@@ -110,6 +128,72 @@ public class SyncController {
         // TODO: syncUserImage
     }
 
+    private Observable<Boolean> syncContacts1() {
+        List<Contact> contacts = new ArrayList<>();
+
+        // Get dirty contacts
+        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+        Cursor cursor = db.query(
+                OutfieldContract.Contact.TABLE_NAME,
+                null,
+                OutfieldContract.Contact.DIRTY + "=?",
+                new String[]{"1"},
+                null, null, null
+        );
+
+        while (cursor != null && cursor.moveToNext()) {
+            contacts.add(new Contact(cursor));
+        }
+        if (cursor != null) cursor.close();
+
+        // Sort dirty contacts
+        return Observable.from(contacts)
+                .flatMap(contact -> {
+                    long id = contact.getId();
+
+                    if (contact.isDestroy()) { // Delete contact
+                        if (contact.getId() > 0) {
+                            return OutfieldAPI.deleteContact(contact);
+                        } else {
+                            return Observable.just(contact)
+                                    .doOnNext(contact1 -> {
+                                        if (contact1 != null) contact.delete();
+                                    });
+                        }
+                    } else if (id > 0 && contact.isFavored()) { // Update and favor contact
+                        if (contact.getContactType() == Contact.Type.PLACE) {
+                            contact.setImages(new ArrayList<>());
+                        }
+                        return OutfieldAPI.updateAndFavorContact(contact)
+                                .doOnNext(returnedContact -> {
+                                    returnedContact.setDirty(false);
+                                    returnedContact.save();
+                                });
+                    } else if (id > 0) { // Update contact
+                        if (contact.getContactType() == Contact.Type.PLACE) {
+                            contact.setImages(new ArrayList<>());
+                        }
+                        return OutfieldAPI.updateContact(contact)
+                                .doOnNext(returnedContact -> {
+                                    returnedContact.setDirty(false);
+                                    returnedContact.save();
+                                });
+                    } else if (id < 0) { // Create contact
+                        contact.setId(0);
+                        return OutfieldAPI.createContact(contact)
+                                .doOnNext(returnedContact -> {
+                                    contact.setId(returnedContact.getId());
+                                    contact.update();
+                                    returnedContact.setImages(contact.getImages());
+                                    returnedContact.setDirty(false);
+                                    returnedContact.save();
+                                });
+                    } else {
+                        return null;
+                    }
+                }).map(o -> true);
+    }
+
     /**
      * Sends local contact changes to server and updates local contacts with response data.
      */
@@ -133,10 +217,6 @@ public class SyncController {
         while (cursor != null && cursor.moveToNext()) {
             Contact contact = new Contact(cursor);
             long id = contact.getId();
-            if (pendingContacts.contains(id)) {
-                continue;
-            }
-            pendingContacts.add(id);
             if (contact.isDestroy()) {
                 deletedContacts.add(contact);
             } else if (id > 0 && contact.isFavored()) {
@@ -150,68 +230,66 @@ public class SyncController {
         if (cursor != null) cursor.close();
 
         // Sync deleted contacts
-        for (final Contact contact : deletedContacts) {
-            OutfieldAPI.deleteContact(contact.getId(), (success, object) -> {
-                if (success) {
-                    Log.d(TAG, "Deleted contact on server.");
-                    contact.delete();
-                }
-                pendingContacts.remove(contact.getId());
-            });
-        }
+        Observable.from(deletedContacts)
+                .flatMap(contact -> {
+                    if (contact.getId() > 0) {
+                        return OutfieldAPI.deleteContact(contact);
+                    } else {
+                        return Observable.just(contact);
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(contact -> {
+                    if (contact != null) contact.delete();
+                });
 
         // Favor and update contacts
-        for (final Contact contact : favoredContacts) {
-            if (contact.getContactType() == Contact.Type.PLACE) {
-                contact.setImages(new ArrayList<Image>());
-            }
-            OutfieldAPI.updateAndFavorContact(contact, (success, object) -> {
-                if (success && object != null) {
-                    Log.d(TAG, "Favored and updated contact on server.");
-                    object.setDirty(false);
-                    object.save();
-                }
-                pendingContacts.remove(contact.getId());
-            });
-        }
+        Observable.from(favoredContacts)
+                .flatMap(contact -> {
+                    if (contact.getContactType() == Contact.Type.PLACE) {
+                        contact.setImages(new ArrayList<>());
+                    }
+                    return OutfieldAPI.updateAndFavorContact(contact);
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(returnedContact -> {
+                    returnedContact.setDirty(false);
+                    returnedContact.save();
+                });
 
         // Sync created contacts
         Observable.from(createdContacts)
                 .flatMap(contact -> {
-                    Log.d(TAG, "Uploading contact");
-                    final long originalId = contact.getId();
                     contact.setId(0);
                     return OutfieldAPI.createContact(contact)
                             .doOnNext(returnedContact -> {
-                                Log.d(TAG, "Created contact on server.");
                                 contact.setId(returnedContact.getId());
                                 contact.update();
                                 returnedContact.setImages(contact.getImages());
                                 returnedContact.setDirty(false);
                                 returnedContact.save();
-                            })
-                            .doOnCompleted(() -> {
-                                pendingContacts.remove(originalId);
                             });
                 })
-                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .subscribeOn(Schedulers.io())
-                .subscribe(contact -> {}, throwable -> {}, this::syncContactImages);
+                .subscribe();
 
         // Sync updated contacts
-        for (final Contact contact : updatedContacts) {
-            if (contact.getContactType() == Contact.Type.PLACE) {
-                contact.setImages(new ArrayList<Image>());
-            }
-            OutfieldAPI.updateContact(contact, (success, object) -> {
-                if (success && object != null) {
-                    Log.d(TAG, "Updated contact on server.");
-                    object.setDirty(false);
-                    object.save();
-                }
-                pendingContacts.remove(contact.getId());
-            });
-        }
+        Observable.from(updatedContacts)
+                .flatMap(contact -> {
+                    if (contact.getContactType() == Contact.Type.PLACE) {
+                        contact.setImages(new ArrayList<>());
+                    }
+                    return OutfieldAPI.updateContact(contact);
+                })
+                .observeOn(Schedulers.io())
+                .subscribeOn(Schedulers.io())
+                .subscribe(returnedContact -> {
+                    returnedContact.setDirty(false);
+                    returnedContact.save();
+                });
     }
 
     /**
@@ -235,8 +313,6 @@ public class SyncController {
         while (cursor != null && cursor.moveToNext()) {
             Interaction interaction = new Interaction(cursor);
             long id = interaction.getId();
-            if (pendingInteractions.contains(id)) continue;
-            pendingInteractions.add(id);
 
             // Sort dirty interactions
             if (interaction.isDestroy()) {
@@ -252,13 +328,16 @@ public class SyncController {
 
         // Sync deleted interactions
         for (final Interaction interaction : deletedInteractions) {
-            OutfieldAPI.deleteInteraction(interaction.getId(), (success, object) -> {
-                if (success) {
-                    Log.d(TAG, "Deleted interaction on server.");
-                    interaction.delete();
-                }
-                pendingInteractions.remove(interaction.getId());
-            });
+            if (interaction.getId() <= 0) {
+                interaction.delete();
+            } else {
+                OutfieldAPI.deleteInteraction(interaction.getId(), (success, object) -> {
+                    if (success) {
+                        Log.d(TAG, "Deleted interaction on server.");
+                        interaction.delete();
+                    }
+                });
+            }
         }
 
         // Sync created interactions
@@ -276,7 +355,6 @@ public class SyncController {
                     object.setDirty(false);
                     object.save();
                 }
-                pendingInteractions.remove(interaction.getId());
             });
         }
 
@@ -290,7 +368,6 @@ public class SyncController {
                     object.setDirty(false);
                     object.save();
                 }
-                pendingInteractions.remove(interaction.getId());
             });
         }
     }
@@ -332,84 +409,81 @@ public class SyncController {
 
         final String oldToken = this.syncToken;
         this.syncToken = syncToken;
+        OutfieldAPI.sync(onlyMe, 50, syncToken)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(syncResponse -> {
+                    // Save new sync token
+                    String newToken = syncResponse.getToken();
+                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
+                    editor.putString(Constants.Headers.SYNC_TOKEN, newToken);
+                    editor.apply();
 
-        OutfieldAPI.sync(onlyMe, 50, syncToken, (success, object) -> {
-            // If failed, reset token so user can try again later
-            if (!success) {
-                setSyncToken(oldToken);
-                onSyncFinished(false);
-                return;
-            }
+                    // If not finished, call sync again
+                    if (syncResponse.getStatus().equals("more")) {
+                        sync(onlyMe, newToken);
+                    }
 
-            // Save new sync token
-            String newToken = object.getToken();
-            SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
-            editor.putString(Constants.Headers.SYNC_TOKEN, newToken);
-            editor.apply();
+                    // Get changes from response
+                    List<Contact> contacts = new ArrayList<Contact>();
+                    List<Integer> deletedContacts = new ArrayList<Integer>();
+                    if (syncResponse.getContacts() != null) {
+                        contacts.addAll(syncResponse.getContacts().getCurrentContacts());
+                        deletedContacts.addAll(syncResponse.getContacts().getDeletedContactIds());
+                    }
 
-            // If not finished, call sync again
-            if (object.getStatus().equals("more")) {
-                sync(onlyMe, newToken);
-            }
+                    List<Interaction> interactions = new ArrayList<Interaction>();
+                    List<Integer> deletedInteractions = new ArrayList<Integer>();
+                    if (syncResponse.getInteractions() != null) {
+                        interactions.addAll(syncResponse.getInteractions().getCurrentInteractions());
+                        deletedInteractions.addAll(syncResponse.getInteractions().getDeletedInteractionIds());
+                    }
 
-            // Get changes from response
-            List<Contact> contacts = new ArrayList<Contact>();
-            List<Integer> deletedContacts = new ArrayList<Integer>();
-            if (object.getContacts() != null) {
-                contacts.addAll(object.getContacts().getCurrentContacts());
-                deletedContacts.addAll(object.getContacts().getDeletedContactIds());
-            }
+                    // TODO: Bulk insert contacts and interactions.
+                    // Create/update interactions from server
+                    for (Interaction interaction : interactions) {
+                        interaction.setDirty(false);
+                        interaction.save();
+                    }
 
-            List<Interaction> interactions = new ArrayList<Interaction>();
-            List<Integer> deletedInteractions = new ArrayList<Integer>();
-            if (object.getInteractions() != null) {
-                interactions.addAll(object.getInteractions().getCurrentInteractions());
-                deletedInteractions.addAll(object.getInteractions().getDeletedInteractionIds());
-            }
+                    // Destroy interactions deleted remotely
+                    SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+                    db.beginTransaction();
+                    for (Integer id : deletedInteractions) {
+                        db.delete(OutfieldContract.Interaction.TABLE_NAME,
+                                OutfieldContract.Interaction.INTERACTION_ID + "=?",
+                                new String[]{String.valueOf(id)});
+                    }
+                    db.setTransactionSuccessful();
+                    db.endTransaction();
 
-            // TODO: Bulk insert contacts and interactions.
-            // TODO: Insert on background thread.
-            // Create/update interactions from server
-            for (Interaction interaction : interactions) {
-                interaction.setDirty(false);
-                interaction.save();
-            }
+                    // Create/update contacts from server
+                    for (Contact contact : contacts) {
+                        contact.setDirty(false);
+                        contact.save();
+                    }
 
-            // Destroy interactions deleted remotely
-            SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
-            db.beginTransaction();
-            for (Integer id : deletedInteractions) {
-                db.delete(OutfieldContract.Interaction.TABLE_NAME,
-                        OutfieldContract.Interaction.INTERACTION_ID + "=?",
-                        new String[]{String.valueOf(id)});
-            }
-            db.setTransactionSuccessful();
-            db.endTransaction();
+                    // Destroy contacts deleted remotely
+                    db.beginTransaction();
+                    for (Integer id : deletedContacts) {
+                        db.delete(OutfieldContract.Contact.TABLE_NAME,
+                                OutfieldContract.Contact.CONTACT_ID + "=?",
+                                new String[]{String.valueOf(id)});
+                    }
+                    db.setTransactionSuccessful();
+                    db.endTransaction();
+                    // TODO: update progress
 
-            // Create/update contacts from server
-            for (Contact contact : contacts) {
-                contact.setDirty(false);
-                contact.save();
-            }
-
-            // Destroy contacts deleted remotely
-            db.beginTransaction();
-            for (Integer id : deletedContacts) {
-                db.delete(OutfieldContract.Contact.TABLE_NAME,
-                        OutfieldContract.Contact.CONTACT_ID + "=?",
-                        new String[]{String.valueOf(id)});
-            }
-            db.setTransactionSuccessful();
-            db.endTransaction();
-            // TODO: update progress
-
-            // Sync notifications and disable loading screen for future app launches
-            if (object.getStatus().equals("done")) {
-                syncNotifications();
-                // TODO: mark showLoadingScreen false
-                onSyncFinished(true);
-            }
-        });
+                    // Sync notifications and disable loading screen for future app launches
+                    if (syncResponse.getStatus().equals("done")) {
+                        syncNotifications();
+                        // TODO: mark showLoadingScreen false
+                        onSyncFinished(true);
+                    }
+                }, throwable -> {
+                    setSyncToken(oldToken);
+                    onSyncFinished(false);
+                });
     }
 
     /**

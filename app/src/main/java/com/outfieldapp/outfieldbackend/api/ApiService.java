@@ -19,6 +19,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -161,12 +162,12 @@ public interface ApiService {
     );
 
     @POST(Endpoints.MY_CONTACTS)
-    Call<Contact.Wrapper> favorContact(
+    Call <Contact.Wrapper> favorContact(
             @Query(Params.Contacts.CONTACT_ID) long contactId
     );
 
     @POST(Endpoints.MY_CONTACTS)
-    Call<Contact.Wrapper> updateAndFavorContact(
+    Observable<Contact.Wrapper> updateAndFavorContact(
             @Body Contact.Wrapper contact
     );
 
@@ -176,7 +177,7 @@ public interface ApiService {
     );
 
     @PUT(Endpoints.CONTACTS + "/{id}")
-    Call<Contact.Wrapper> updateContact(
+    Observable<Contact.Wrapper> updateContact(
             @Path("id") long id,
             @Body Contact.Wrapper contact
     );
@@ -187,7 +188,7 @@ public interface ApiService {
     );
 
     @DELETE(Endpoints.CONTACTS + "/{id}")
-    Call<Void> deleteContact(
+    Observable<Response<Void>> deleteContact(
             @Path("id") long id
     );
 
@@ -277,7 +278,7 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.SYNC)
-    Call<SyncResponse> sync(
+    Observable<Response<SyncResponse>> sync(
             @Query(Params.Sync.ONLY_ME) Boolean onlyMe,
             @Query(Params.Sync.PER_SYNC) Integer perSync,
             @Query(Params.Sync.SYNC_TOKEN) String syncToken

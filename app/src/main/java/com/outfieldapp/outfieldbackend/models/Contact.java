@@ -73,6 +73,7 @@ public class Contact extends Model {
     }
 
     /* Setters */
+    public void setRowId(long id) { rowId = id; }
     public void setId(long id) { contactId = id; }
     public void setContactType(Type type) { contactType = type.toString(); }
     public void setName(String name) { this.name = name; }
@@ -127,7 +128,7 @@ public class Contact extends Model {
     public boolean save() {
 
         // Insert contact values
-        insert();
+        if (!insert()) return false;
 
         // Insert addresses
         if (!addresses.isEmpty()) {
@@ -224,7 +225,7 @@ public class Contact extends Model {
         SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
         int rows = db.delete(
                 OutfieldContract.Contact.TABLE_NAME,
-                OutfieldContract.Contact._ID,
+                OutfieldContract.Contact._ID + "=?",
                 new String[]{String.valueOf(rowId)}
         );
         return rows > 0;

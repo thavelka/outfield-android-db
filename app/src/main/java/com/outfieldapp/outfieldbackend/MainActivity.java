@@ -26,30 +26,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1",
-//                new OutfieldAPI.ResponseCallback<User>() {
-//            @Override
-//            public void onResponse(boolean success, User object) {
-//                if (success && object.getId() > 0) {
-//                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
-//                    editor.putLong(Constants.Prefs.CURRENT_USER_ID, object.getId());
-//                    editor.putString(Constants.Headers.EMAIL, object.getEmail());
-//                    editor.putString(Constants.Headers.AUTH_TOKEN, object.getToken());
-//                    editor.commit();
-//                    OutfieldAPI.setAuthHeaders(object.getEmail(), object.getToken());
-//                    SyncController.getInstance().doSync();
-//                }
-//            }
-//        });
-
+        //OutfieldApp.getSharedPrefs().edit().clear().commit();
+        //OutfieldApp.getDatabase().clear();
         signIn();
     }
 
     public void signIn() {
         OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1")
-                .doOnSubscribe(() -> Log.d(TAG, "Signing in"))
-                .doOnCompleted(() -> Log.d(TAG, "Sign in complete"))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(user -> {
@@ -67,20 +50,23 @@ public class MainActivity extends AppCompatActivity {
 
     public void runTest() {
         // insert some contacts
-        Contact contact = getSampleContact();
-        contact.setName("NEW BACKEND 1");
-        contact.setDirty(true);
-        contact.save();
-
-        Contact contact1 = getSampleContact();
-        contact1.setName("NEW BACKEND 2");
-        contact1.setDirty(true);
-        contact1.save();
-
-        Contact contact2 = getSampleContact();
-        contact2.setName("NEW BACKEND 3");
-        contact2.setDirty(true);
-        contact2.save();
+//        Contact contact = getSampleContact();
+//        contact.setName("NEW BACKEND 10");
+//        contact.setDirty(true);
+//        contact.save();
+//
+//        Contact contact1 = getSampleContact();
+//        contact1.setName("NEW BACKEND 8 EDIT 2");
+//        contact1.setDirty(true);
+//        contact1.setId(55618);
+//        contact1.save();
+//
+//        Contact contact2 = getSampleContact();
+//        contact2.setName("NEW BACKEND 9");
+//        contact2.setDirty(true);
+//        contact2.setDestroy(true);
+//        contact2.setId(55617);
+//        contact2.save();
 
         SyncController.getInstance().doSync();
     }

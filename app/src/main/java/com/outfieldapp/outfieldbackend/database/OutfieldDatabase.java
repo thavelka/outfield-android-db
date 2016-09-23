@@ -4,7 +4,19 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import static com.outfieldapp.outfieldbackend.database.OutfieldContract.*;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Address;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Comment;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Contact;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Email;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Form;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.FormEntry;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.FormField;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Image;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Interaction;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Notification;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.Phone;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.PlannedInteraction;
+import static com.outfieldapp.outfieldbackend.database.OutfieldContract.User;
 
 public class OutfieldDatabase extends SQLiteOpenHelper {
 
@@ -36,7 +48,7 @@ public class OutfieldDatabase extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("CREATE TABLE " + Contact.TABLE_NAME + " ("
                 + Contact._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + Contact.CONTACT_ID + " INTEGER,"
-                + Contact.CONTACT_TYPE + " TEXT,"
+                + Contact.CONTACT_TYPE + " TEXT NOT NULL,"
                 + Contact.NAME + " TEXT,"
                 + Contact.TITLE + " TEXT,"
                 + Contact.COMPANY + " TEXT,"
@@ -198,7 +210,7 @@ public class OutfieldDatabase extends SQLiteOpenHelper {
                 + Interaction.CONTACT_ID + " INTEGER,"
                 + Interaction.USER_ID + " INTEGER,"
                 + Interaction.FORM_IDS + " TEXT,"
-                + Interaction.INTERACTION_TYPE + " TEXT,"
+                + Interaction.INTERACTION_TYPE + " TEXT NOT NULL,"
                 + Interaction.NOTES + " TEXT,"
                 + Interaction.SHARE_URL + " TEXT,"
                 + Interaction.DURATION + " INTEGER,"
@@ -223,7 +235,7 @@ public class OutfieldDatabase extends SQLiteOpenHelper {
                 + PlannedInteraction.INTERACTION_ID + " INTEGER,"
                 + PlannedInteraction.CONTACT_ID + " INTEGER,"
                 + PlannedInteraction.USER_ID + " INTEGER,"
-                + PlannedInteraction.INTERACTION_TYPE + " TEXT,"
+                + PlannedInteraction.INTERACTION_TYPE + " TEXT NOT NULL,"
                 + PlannedInteraction.NOTES + " TEXT,"
                 + PlannedInteraction.SHARE_URL + " TEXT,"
                 + PlannedInteraction.DURATION + " INTEGER,"
@@ -240,5 +252,15 @@ public class OutfieldDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
 
+    }
+
+    public void clear() {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(Notification.TABLE_NAME, null, null);
+        db.delete(User.TABLE_NAME, null, null);
+        db.delete(Interaction.TABLE_NAME, null, null);
+        db.delete(PlannedInteraction.TABLE_NAME, null, null);
+        db.delete(Contact.TABLE_NAME, null, null);
+        db.delete(Form.TABLE_NAME, null, null);
     }
 }

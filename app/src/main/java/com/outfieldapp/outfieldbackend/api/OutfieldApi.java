@@ -421,33 +421,11 @@ public final class OutfieldAPI {
      * Add an organization's contact to the current user's “my contacts” list,
      * while simultaneously updating the contact.
      * @param contact Contact object to be favored and updated.
-     * @param callback Callback to receive boolean success value and updated contact.
      */
-    public static void updateAndFavorContact(Contact contact, final ResponseCallback<Contact> callback) {
-
-        if (contact.getId() <= 0) {
-            Log.e(TAG, "Contact ID must be greater than 0.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Contact.Wrapper> call = apiService.updateAndFavorContact(contact.wrap());
-        call.enqueue(new Callback<Contact.Wrapper>() {
-            @Override
-            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContact());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during updateAndFavorContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Observable<Contact> updateAndFavorContact(Contact contact) {
+        return apiService.updateAndFavorContact(contact.wrap())
+                .doOnError(throwable -> Log.e(TAG, "Error during updateAndFavorContact", throwable))
+                .map(Contact.Wrapper::getContact);
     }
 
     /**
@@ -485,48 +463,15 @@ public final class OutfieldAPI {
         });
     }
 
-//    /**
-//     * <code>POST /api/v2/contacts</code>
-//     * <p>
-//     * Creates a contact on the server with the properties of the attached contact.
-//     * This method should not be used if the contact already has an ID. If the contact has an ID,
-//     * it already exists on the server and should be updated using {@link #updateContact}.
-//     * @param contact The contact to be uploaded.
-//     * @param callback Callback to receive the boolean success value and returned new contact.
-//     */
-//    public static void createContact(Contact contact, final ResponseCallback<Contact> callback) {
-//
-//        if (contact.getId() >= 0) {
-//            Log.e(TAG, "Contact already exists on server.");
-//            callback.onResponse(false, null);
-//            return;
-//        }
-//
-//        if (contact.getContactType() == null) {
-//            Log.e(TAG, "Contact must have type.");
-//            callback.onResponse(false, null);
-//            return;
-//        }
-//
-//        Call<Contact.Wrapper> call = apiService.createContact(contact.wrap());
-//        call.enqueue(new Callback<Contact.Wrapper>() {
-//            @Override
-//            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-//                if (response.isSuccessful()) {
-//                    callback.onResponse(true, response.body().getContact());
-//                } else {
-//                    onFailure(call, new Exception("Status code: " + response.code()));
-//                }
-//            }
-//
-//            @Override
-//            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-//                Log.e(TAG, "Error during createContact", t);
-//                callback.onResponse(false, null);
-//            }
-//        });
-//    }
-
+    /**
+     * <code>POST /api/v2/contacts</code>
+     * <p>
+     * Creates a contact on the server with the properties of the attached contact.
+     * This method should not be used if the contact already has an ID. If the contact has an ID,
+     * it already exists on the server and should be updated using {@link #updateContact}.
+     * @param contact The contact to be uploaded.
+     * @return The created contact as an {@link Observable}.
+     */
     public static Observable<Contact> createContact(Contact contact) {
         return apiService.createContact(contact.wrap())
                 .doOnError(throwable -> Log.e(TAG, "Error during createContact", throwable))
@@ -540,41 +485,13 @@ public final class OutfieldAPI {
      * This method should only be used for contacts that already have an ID. If the contact does
      * not have an ID, it doesn't exist on the server yet, and needs to be created using
      * {@link #createContact}.
-     * @param contact The contact to be uploaded.
-     * @param callback Callback to receive the boolean success value and returned new contact.
+     * @param contact The contact to be updated.
+     * @return The updated contact as an {@link Observable}.
      */
-    public static void updateContact(Contact contact, final ResponseCallback<Contact> callback) {
-
-        if (contact.getId() <= 0) {
-            Log.e(TAG, "Contact does not exist on server.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        if (contact.getContactType() == null) {
-            Log.e(TAG, "Contact must have type.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Contact.Wrapper> call = apiService
-                .updateContact(contact.getId(), contact.wrap());
-        call.enqueue(new Callback<Contact.Wrapper>() {
-            @Override
-            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContact());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during updateContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Observable<Contact> updateContact(Contact contact) {
+        return apiService.updateContact(contact.getId(), contact.wrap())
+                .doOnError(throwable -> Log.e(TAG, "Error during updateContact", throwable))
+                .map(Contact.Wrapper::getContact);
     }
 
     /**
@@ -583,34 +500,18 @@ public final class OutfieldAPI {
      * Deletes an existing contact from the server. This method is only necessary for
      * contacts that already have an ID. If the contact does not have an ID, it doesn't
      * exist on the server yet and only needs to be deleted locally.
-     * @param contactId API ID of the contact to be deleted.
-     * @param callback Callback to receive boolean success value.
+     * @param contact Contact to be deleted.
+     * @return Observer containing the original contact. If deletion failed, contact will be null.
      */
-    public static void deleteContact(long contactId, final ResponseCallback<Void> callback) {
-
-        if (contactId <= 0) {
-            Log.e(TAG, "Contact does not exist on server.");
-            callback.onResponse(true, null);
-            return;
-        }
-
-        Call<Void> call = apiService.deleteContact(contactId);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, null);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error during deleteContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Observable<Contact> deleteContact(Contact contact) {
+        return apiService.deleteContact(contact.getId())
+                .flatMap(response -> {
+                    if (response.isSuccessful() || response.code() == 404) {
+                        return Observable.just(contact);
+                    } else {
+                        return null;
+                    }
+                });
     }
 
     // TODO: public void uploadContactImages(List<Image> images, long contactId)
@@ -1044,32 +945,19 @@ public final class OutfieldAPI {
      * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
      * @param callback Callback to receive boolean success value and {@link SyncResponse}.
      */
-    public static void sync(Boolean onlyMe, Integer perSync, String syncToken,
-                            final ResponseCallback<SyncResponse> callback) {
+    public static Observable<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
 
         // Set default params
         if (onlyMe == null) onlyMe = false;
         if (perSync == null) perSync = 50;
 
-        Call<SyncResponse> call = apiService.sync(onlyMe, perSync, syncToken);
-        call.enqueue(new Callback<SyncResponse>() {
-            @Override
-            public void onResponse(Call<SyncResponse> call, Response<SyncResponse> response) {
-                if (response.isSuccessful()) {
+        return apiService.sync(onlyMe, perSync, syncToken)
+                .doOnError(throwable -> Log.e(TAG, "Error during sync", throwable))
+                .map(response -> {
                     String status = response.headers().get(Constants.Headers.SYNC_STATUS);
                     SyncResponse syncResponse = response.body();
                     syncResponse.setStatus(status);
-                    callback.onResponse(true, syncResponse);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<SyncResponse> call, Throwable t) {
-                Log.e(TAG, "Error during sync", t);
-                callback.onResponse(false, null);
-            }
-        });
+                    return syncResponse;
+                });
     }
 }
