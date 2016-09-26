@@ -943,7 +943,7 @@ public final class OutfieldAPI {
      * @param onlyMe When false, gets interactions by all team members. Defaults to false if null.
      * @param perSync The number of items to retrieve per page. Defaults to 50 if null.
      * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
-     * @param callback Callback to receive boolean success value and {@link SyncResponse}.
+     * @return Observable containing the {@link SyncResponse}.
      */
     public static Observable<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
 

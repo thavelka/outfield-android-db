@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rx.Observable;
+import rx.Single;
 import rx.schedulers.Schedulers;
 
 // TODO: Implement Counter class or RxJava
@@ -35,32 +36,6 @@ public class SyncController {
     private boolean userInfoCurrent;
     private String syncToken = "";
 
-    public void doSync1() {
-        if (isSyncing) return;
-        if (!userInfoCurrent) {
-            getUserDetails();
-            return;
-        }
-
-        Log.d(TAG, "Starting sync");
-        // TODO: Send broadcast intent
-
-        SharedPreferences prefs = OutfieldApp.getSharedPrefs();
-        String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
-
-        isSyncing = true;
-        progress = 0;
-        syncTotal = 0;
-        userInfoCurrent = false;
-
-        syncCurrentUser();
-        syncForms();
-        syncContacts1()
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe(aBoolean -> {}, throwable -> {}, () -> sync(false, syncToken));
-    }
-
     public void doSync() {
         if (isSyncing) return;
         if (!userInfoCurrent) {
@@ -79,14 +54,16 @@ public class SyncController {
         syncTotal = 0;
         userInfoCurrent = false;
 
-        syncCurrentUser();
-        syncForms();
-        syncContacts();
-        syncInteractions();
-        //syncContactImages();
-        syncInteractionImages();
-        syncComments();
-        sync(false, syncToken);
+        syncContacts().subscribe(success -> sync(false, syncToken));
+
+//        syncCurrentUser();
+//        syncForms();
+//        syncContacts();
+//        syncInteractions();
+//        syncContactImages();
+//        syncInteractionImages();
+//        syncComments();
+//        sync(false, syncToken);
     }
 
     /**
@@ -128,76 +105,10 @@ public class SyncController {
         // TODO: syncUserImage
     }
 
-    private Observable<Boolean> syncContacts1() {
-        List<Contact> contacts = new ArrayList<>();
-
-        // Get dirty contacts
-        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
-        Cursor cursor = db.query(
-                OutfieldContract.Contact.TABLE_NAME,
-                null,
-                OutfieldContract.Contact.DIRTY + "=?",
-                new String[]{"1"},
-                null, null, null
-        );
-
-        while (cursor != null && cursor.moveToNext()) {
-            contacts.add(new Contact(cursor));
-        }
-        if (cursor != null) cursor.close();
-
-        // Sort dirty contacts
-        return Observable.from(contacts)
-                .flatMap(contact -> {
-                    long id = contact.getId();
-
-                    if (contact.isDestroy()) { // Delete contact
-                        if (contact.getId() > 0) {
-                            return OutfieldAPI.deleteContact(contact);
-                        } else {
-                            return Observable.just(contact)
-                                    .doOnNext(contact1 -> {
-                                        if (contact1 != null) contact.delete();
-                                    });
-                        }
-                    } else if (id > 0 && contact.isFavored()) { // Update and favor contact
-                        if (contact.getContactType() == Contact.Type.PLACE) {
-                            contact.setImages(new ArrayList<>());
-                        }
-                        return OutfieldAPI.updateAndFavorContact(contact)
-                                .doOnNext(returnedContact -> {
-                                    returnedContact.setDirty(false);
-                                    returnedContact.save();
-                                });
-                    } else if (id > 0) { // Update contact
-                        if (contact.getContactType() == Contact.Type.PLACE) {
-                            contact.setImages(new ArrayList<>());
-                        }
-                        return OutfieldAPI.updateContact(contact)
-                                .doOnNext(returnedContact -> {
-                                    returnedContact.setDirty(false);
-                                    returnedContact.save();
-                                });
-                    } else if (id < 0) { // Create contact
-                        contact.setId(0);
-                        return OutfieldAPI.createContact(contact)
-                                .doOnNext(returnedContact -> {
-                                    contact.setId(returnedContact.getId());
-                                    contact.update();
-                                    returnedContact.setImages(contact.getImages());
-                                    returnedContact.setDirty(false);
-                                    returnedContact.save();
-                                });
-                    } else {
-                        return null;
-                    }
-                }).map(o -> true);
-    }
-
     /**
      * Sends local contact changes to server and updates local contacts with response data.
      */
-    private void syncContacts() {
+    private Single<Boolean> syncContacts() {
         List<Contact> deletedContacts = new ArrayList<>();
         List<Contact> createdContacts = new ArrayList<>();
         List<Contact> updatedContacts = new ArrayList<>();
@@ -230,7 +141,7 @@ public class SyncController {
         if (cursor != null) cursor.close();
 
         // Sync deleted contacts
-        Observable.from(deletedContacts)
+        Observable<Contact> delete = Observable.from(deletedContacts)
                 .flatMap(contact -> {
                     if (contact.getId() > 0) {
                         return OutfieldAPI.deleteContact(contact);
@@ -238,29 +149,25 @@ public class SyncController {
                         return Observable.just(contact);
                     }
                 })
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe(contact -> {
+                .doOnNext(contact -> {
                     if (contact != null) contact.delete();
                 });
 
         // Favor and update contacts
-        Observable.from(favoredContacts)
+        Observable<Contact> favor = Observable.from(favoredContacts)
                 .flatMap(contact -> {
                     if (contact.getContactType() == Contact.Type.PLACE) {
                         contact.setImages(new ArrayList<>());
                     }
                     return OutfieldAPI.updateAndFavorContact(contact);
                 })
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe(returnedContact -> {
+                .doOnNext(returnedContact -> {
                     returnedContact.setDirty(false);
                     returnedContact.save();
                 });
 
         // Sync created contacts
-        Observable.from(createdContacts)
+        Observable<Contact> create = Observable.from(createdContacts)
                 .flatMap(contact -> {
                     contact.setId(0);
                     return OutfieldAPI.createContact(contact)
@@ -271,25 +178,28 @@ public class SyncController {
                                 returnedContact.setDirty(false);
                                 returnedContact.save();
                             });
-                })
-                .observeOn(Schedulers.io())
-                .subscribeOn(Schedulers.io())
-                .subscribe();
+                });
 
         // Sync updated contacts
-        Observable.from(updatedContacts)
+        Observable<Contact> update = Observable.from(updatedContacts)
                 .flatMap(contact -> {
                     if (contact.getContactType() == Contact.Type.PLACE) {
                         contact.setImages(new ArrayList<>());
                     }
                     return OutfieldAPI.updateContact(contact);
                 })
-                .observeOn(Schedulers.io())
-                .subscribeOn(Schedulers.io())
-                .subscribe(returnedContact -> {
+                .doOnNext(returnedContact -> {
                     returnedContact.setDirty(false);
                     returnedContact.save();
                 });
+
+        // Merge observables into single and return
+        return Single.create(singleSubscriber ->
+                Observable.merge(delete, favor, create, update)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .doOnCompleted(() -> singleSubscriber.onSuccess(true))
+                .subscribe());
     }
 
     /**
