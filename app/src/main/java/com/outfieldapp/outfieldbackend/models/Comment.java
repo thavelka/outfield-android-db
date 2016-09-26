@@ -45,6 +45,7 @@ public class Comment extends Model {
     public User getUser() { return user; }
 
     /* Setters */
+    public void setId(long id) { commentId = id; }
     public void setInteractionId(long id) { interactionId = id; }
     public void setText(String text) { this.text = text; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
@@ -118,6 +119,35 @@ public class Comment extends Model {
             db.endTransaction();
         }
         return rowId >= 0;
+    }
+
+    public boolean update() {
+        if (rowId <= 0) {
+            Log.e(TAG, "Error: You must insert before updating");
+            return false;
+        }
+        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+        db.beginTransaction();
+        int rows = db.update(
+                OutfieldContract.Comment.TABLE_NAME,
+                getContentValues(),
+                OutfieldContract.Comment._ID + "=?",
+                new String[]{String.valueOf(rowId)}
+        );
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        return rows > 0;
+    }
+
+    public boolean delete() {
+        if (rowId <= 0) return false;
+        SQLiteDatabase db = OutfieldApp.getDatabase().getWritableDatabase();
+        int rows = db.delete(
+                OutfieldContract.Comment.TABLE_NAME,
+                OutfieldContract.Comment._ID + "=?",
+                new String[]{String.valueOf(rowId)}
+        );
+        return rows > 0;
     }
 
     @Override

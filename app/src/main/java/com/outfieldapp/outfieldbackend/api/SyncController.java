@@ -7,9 +7,11 @@ import android.util.Log;
 
 import com.outfieldapp.outfieldbackend.OutfieldApp;
 import com.outfieldapp.outfieldbackend.database.OutfieldContract;
+import com.outfieldapp.outfieldbackend.models.Comment;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Form;
 import com.outfieldapp.outfieldbackend.models.Interaction;
+import com.outfieldapp.outfieldbackend.models.Notification;
 import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
@@ -48,23 +50,26 @@ public class SyncController {
         Log.d(TAG, "Starting sync");
         // TODO: Send broadcast intent
 
-        // Get sync token
-        SharedPreferences prefs = OutfieldApp.getSharedPrefs();
-        String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
-
         isSyncing = true;
         progress = 0;
         syncTotal = 0;
         userInfoCurrent = false;
 
-        syncCurrentUser();
-//        syncForms();
-        syncContacts();
-        syncInteractions();
-//        syncContactImages();
-//        syncInteractionImages();
-//        syncComments();
-//        sync(false, syncToken);
+        Single.merge(
+                syncCurrentUser(),
+                syncForms(),
+                syncContacts(),
+                syncInteractions(),
+                syncComments(),
+                syncNotifications()
+        )
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(success -> {
+                    SharedPreferences prefs = OutfieldApp.getSharedPrefs();
+                    String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
+                    sync(false, syncToken);
+                }, throwable -> onSyncFinished(false));
     }
 
     /**
@@ -88,7 +93,7 @@ public class SyncController {
      */
     private Single<Boolean> syncCurrentUser() {
         final User currentUser = User.getCurrentUser();
-        if (currentUser == null || !currentUser.isDirty()) return null;
+        if (currentUser == null || !currentUser.isDirty()) return Single.just(false);
         return OutfieldAPI.updateUser(currentUser)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
@@ -209,7 +214,10 @@ public class SyncController {
                 Observable.merge(delete, favor, create, update)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnCompleted(() -> singleSubscriber.onSuccess(true))
+                .doOnCompleted(() -> {
+                    syncContactImages();
+                    singleSubscriber.onSuccess(true);
+                })
                 .subscribe());
     }
 
@@ -290,7 +298,10 @@ public class SyncController {
                 Observable.merge(delete, create, update)
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
-                        .doOnCompleted(() -> singleSubscriber.onSuccess(true))
+                        .doOnCompleted(() -> {
+                            syncInteractionImages();
+                            singleSubscriber.onSuccess(true);
+                        })
                         .subscribe());
     }
 
@@ -299,15 +310,94 @@ public class SyncController {
     }
 
     private void syncInteractionImages() {
-
+        Log.d(TAG, "SYNC INTERACTION IMAGES");
     }
 
-    private void syncComments() {
+    private Single<Boolean> syncComments() {
+        List<Comment> deletedComments = new ArrayList<>();
+        List<Comment> createdComments = new ArrayList<>();
+        List<Comment> updatedComments = new ArrayList<>();
 
+        // Get dirty comments
+        SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
+        Cursor cursor = db.query(
+                OutfieldContract.Comment.TABLE_NAME,
+                null,
+                OutfieldContract.Comment.DIRTY + "=?",
+                new String[]{"1"},
+                null, null, null
+        );
+
+        // Sort dirty comments
+        while (cursor != null && cursor.moveToNext()) {
+            Comment comment = new Comment(cursor);
+            long id = comment.getId();
+            if (comment.isDestroy()) {
+                deletedComments.add(comment);
+            } else if (id > 0) {
+                updatedComments.add(comment);
+            } else if (id <= 0) {
+                createdComments.add(comment);
+            }
+        }
+
+        if (cursor != null) cursor.close();
+
+        // Sync deleted comments
+        Observable<Comment> delete = Observable.from(deletedComments)
+                .flatMap(comment -> OutfieldAPI.deleteComment(comment).toObservable())
+                .doOnNext(comment -> {
+                    if (comment != null) {
+                        Log.d(TAG, "Deleted comment on server.");
+                        comment.delete();
+                    }
+                });
+
+        // Sync created comments
+        Observable<Comment> create = Observable.from(createdComments)
+                .flatMap(comment -> OutfieldAPI.createComment(comment).toObservable()
+                        .doOnNext(returnedComment -> {
+                            if (returnedComment != null) {
+                                Log.d(TAG, "Created comment on server");
+                                comment.setId(returnedComment.getId());
+                                comment.update();
+                                returnedComment.setInteractionId(comment.getInteractionId());
+                                returnedComment.setDirty(false);
+                                returnedComment.save();
+                            }
+                        }));
+
+        // Sync updated comments
+        Observable<Comment> update = Observable.from(updatedComments)
+                .flatMap(comment -> OutfieldAPI.updateComment(comment).toObservable()
+                        .doOnNext(returnedComment -> {
+                            Log.d(TAG, "Updated comment on server");
+                            returnedComment.setInteractionId(comment.getInteractionId());
+                            returnedComment.setDirty(false);
+                            returnedComment.save();
+                        }));
+
+        // Merge observables into single and return
+        return Single.create(singleSubscriber ->
+                Observable.merge(delete, create, update)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .doOnCompleted(() -> singleSubscriber.onSuccess(true))
+                        .subscribe());
     }
 
-    private void syncNotifications() {
-
+    private Single<Boolean> syncNotifications() {
+        return OutfieldAPI.getNotifications()
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .doOnSuccess(notifications -> {
+                    if (notifications == null) return;
+                    for (Notification notification : notifications) {
+                        notification.save();
+                    }
+                })
+                .map(notifications -> true)
+                .onErrorReturn(throwable -> false);
     }
 
     /**
@@ -338,14 +428,14 @@ public class SyncController {
      * @param onlyMe If false, retrieves interactions by all team members for favored contact.
      * @param syncToken When to begin syncing from. If null, will sync from beginning of time.
      */
-    private void sync(final Boolean onlyMe, final String syncToken) {
+    private Single<Boolean> sync(final Boolean onlyMe, final String syncToken) {
 
         final String oldToken = this.syncToken;
         this.syncToken = syncToken;
-        OutfieldAPI.sync(onlyMe, 50, syncToken)
+        return OutfieldAPI.sync(onlyMe, 50, syncToken)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .subscribe(syncResponse -> {
+                .doOnSuccess(syncResponse -> {
                     // Save new sync token
                     String newToken = syncResponse.getToken();
                     SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
@@ -372,7 +462,6 @@ public class SyncController {
                         deletedInteractions.addAll(syncResponse.getInteractions().getDeletedInteractionIds());
                     }
 
-                    // TODO: Bulk insert contacts and interactions.
                     // Create/update interactions from server
                     for (Interaction interaction : interactions) {
                         interaction.setDirty(false);
@@ -413,10 +502,13 @@ public class SyncController {
                         // TODO: mark showLoadingScreen false
                         onSyncFinished(true);
                     }
-                }, throwable -> {
+                })
+                .doOnError(throwable -> {
                     setSyncToken(oldToken);
                     onSyncFinished(false);
-                });
+                })
+                .map(syncResponse -> true)
+                .onErrorReturn(throwable -> false);
     }
 
     /**
