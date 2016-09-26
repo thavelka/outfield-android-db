@@ -14,18 +14,8 @@ import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import rx.Observable;
+import rx.Single;
 
-/**
- * Provides static methods for communicating with Outfield REST API asynchronously.
- * A {@link ResponseCallback} is provided as a parameter to any request method to capture the
- * response data and return it to the calling thread.
- *
- * @see {@link ResponseCallback}
- */
 public final class OutfieldAPI {
 
     public static final String TAG = OutfieldAPI.class.getSimpleName();
@@ -47,37 +37,18 @@ public final class OutfieldAPI {
     //#############################################################################################
 
     /**
-     * Callback used to capture response data.
-     * <p>
-     * <code>success</code> will be false if the parameters are invalid or if the HTTP response code
-     * is not between 200 and 300.
-     * @param <T> The type of object to be returned from the API response.
-     */
-    public interface ResponseCallback<T> {
-        public void onResponse(boolean success, T object);
-    }
-
-//    /**
-//     * <code>POST /api/v2/sign_in</code>
-//     * <p>
-//     * Sends login request to server, which responds with a user object containg the user's info.
-//     * @param email The user's email address.
-//     * @param password The user's password.
-//     * @param callback Callback to receive boolean success value and user object.
-//     */
-
-    /**
      * <code>POST /api/v2/sign_in</code>
      * Sends login request to server, which responds with a {@link User} object containing the
      * user's info. If an error is encountered, the user will be null.
      * @param email The user's email address.
      * @param password The user's password
-     * @return Observable containing the user object.
+     * @return {@link Single} containing the user object or null on failure.
      */
-    public static Observable<User> signIn(String email, String password) {
+    public static Single<User> signIn(String email, String password) {
         return apiService.signIn(email, password)
+                .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during signIn", throwable))
-                .map(User.Wrapper::getUser);
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -86,52 +57,26 @@ public final class OutfieldAPI {
      * Checks to see if account already exists for this email address. If so, user info is returned.
      * If user doesn't exist, <code>success</code> will be false.
      * @param email The user's email address.
-     * @param callback Callback to receive boolean success value and user object.
+     * @return {@link Single} containing the user object or null if the user does not exist.
      */
-    public static void getAccountExists(String email, final ResponseCallback<User> callback) {
-        Call<User.Wrapper> call = apiService.getAccountExists(email);
-        call.enqueue(new Callback<User.Wrapper>() {
-            @Override
-            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getUser());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getAccountExists", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<User> checkAccountExists(String email) {
+        return apiService.checkAccountExists(email)
+                .map(User.Wrapper::getUser)
+                .doOnError(throwable -> Log.e(TAG, "Error during checkAccountExists", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
      * <code>GET /api/v2/me</code>
      * <p>
      * Retrieves detailed information about user.
-     * @param callback Callback to receive boolean success value and user object.
+     * @return {@link Single} containing the user object or null on failure.
      */
-    public static void getUserDetails(final ResponseCallback<User> callback) {
-        Call<User.Wrapper> call = apiService.getUserDetails();
-        call.enqueue(new Callback<User.Wrapper>() {
-            @Override
-            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getUser());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code() + "\nMessage: " + response.message()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getUserDetails", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<User> getUserDetails() {
+        return apiService.getUserDetails()
+                .map(User.Wrapper::getUser)
+                .doOnError(throwable -> Log.e(TAG, "Error during getUserDetails", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -139,26 +84,13 @@ public final class OutfieldAPI {
      * <p>
      * Updates user's information.
      * @param user The user object to be sent to the server.
-     * @param callback Callback to receive boolean success value and user object.
+     * @return {@link Single} containing the updated user or null on failure.
      */
-    public static void updateUser(User user, final ResponseCallback<User> callback) {
-        Call<User.Wrapper> call = apiService.updateUser(user.wrap());
-        call.enqueue(new Callback<User.Wrapper>() {
-            @Override
-            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getUser());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during updateUser", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<User> updateUser(User user) {
+        return apiService.updateUser(user.wrap())
+                .map(User.Wrapper::getUser)
+                .doOnError(throwable -> Log.e(TAG, "Error during updateUser", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -169,28 +101,13 @@ public final class OutfieldAPI {
      * @param name The user's full name.
      * @param password The user's password.
      * @param orgName Name of the organization to be created.
-     * @param callback Callback to receive boolean success value and user object.
+     * @return {@link Single} containing newly created user or null on failure.
      */
-    public static void signUp(String email, String name, String password,
-                              String orgName, final ResponseCallback<User> callback) {
-        Call<User.Wrapper> call = apiService
-                .signUp(email, name, password, password, orgName);
-        call.enqueue(new Callback<User.Wrapper>() {
-            @Override
-            public void onResponse(Call<User.Wrapper> call, Response<User.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getUser());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<User.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during signUp", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<User> signUp(String email, String name, String password, String orgName) {
+        return apiService.signUp(email, name, password, password, orgName)
+                .map(User.Wrapper::getUser)
+                .doOnError(throwable -> Log.e(TAG, "Error during signUp", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -198,26 +115,13 @@ public final class OutfieldAPI {
      * <p>
      * Sends email to specified address with a link to reset password.
      * @param email The user's email address.
-     * @param callback Callback to receive boolean success value.
+     * @return {@link Single} containing boolean success value.
      */
-    public static void resetPassword(String email, final ResponseCallback<Void> callback) {
-        Call<Void> call = apiService.resetPassword(email);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, null);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error during resetPassword", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Boolean> resetPassword(String email) {
+        return apiService.resetPassword(email)
+                .map(aVoid -> true)
+                .doOnError(throwable -> Log.e(TAG, "Error during resetPassword", throwable))
+                .onErrorReturn(throwable -> false);
     }
 
     // TODO: public void createPushCredential(String token, ResponseCallback<String> callback)
@@ -234,33 +138,17 @@ public final class OutfieldAPI {
      * @param perPage The number of contacts to retrieve per page. Defauts to 25 if null.
      * @param global Retrieves all places if true, only favored places if false or null.
      * @param search Search contacts for the given query. Can be null.
-     * @param callback Callback to receive boolean success value and response.
+     * @return {@link Single} containing a {@link ContactsResponse} object or null on failure.
      */
-    public static void getPeople(Integer page, Integer perPage, Boolean global, String search,
-                                 final ResponseCallback<ContactsResponse> callback) {
+    public static Single<ContactsResponse> getPeople(Integer page, Integer perPage, Boolean global, String search) {
         // Set default parameter values
         if (page == null) page = 1;
         if (perPage == null) perPage = 25;
         if (global == null) global = false;
 
-        Call<ContactsResponse> call = apiService
-                .getPeople(Contact.Type.PERSON.toString(), search, perPage, page, global);
-        call.enqueue(new Callback<ContactsResponse>() {
-            @Override
-            public void onResponse(Call<ContactsResponse> call, Response<ContactsResponse> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ContactsResponse> call, Throwable t) {
-                Log.e(TAG, "Error during getPeople", t);
-                callback.onResponse(false, null);
-            }
-        });
+        return apiService.getPeople(Contact.Type.PERSON.toString(), search, perPage, page, global)
+                .doOnError(throwable -> Log.e(TAG, "Error during getPeople", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -274,11 +162,11 @@ public final class OutfieldAPI {
      * @param latitude Latitude as a double, used to get nearby places. (optional)
      * @param longitude Longitude as a double, used to get nearby places. (optional)
      * @param radius Radius in miles, used to get nearby places. (optional)
-     * @param callback Callback to receive boolean success value and response.
+     * @return {@link Single} containing a {@link ContactsResponse} object or null on failure.
      */
-    public static void getPlaces(Integer page, Integer perPage, Boolean global, String search,
-                                 Double latitude, Double longitude, Integer radius,
-                                 final ResponseCallback<ContactsResponse> callback) {
+    public static Single<ContactsResponse> getPlaces(Integer page, Integer perPage, Boolean global,
+                                                     String search, Double latitude, Double longitude,
+                                                     Integer radius) {
 
         // Set default parameter values
         if (page == null) page = 1;
@@ -290,25 +178,10 @@ public final class OutfieldAPI {
             location = latitude + "," + longitude;
         }
 
-        Call<ContactsResponse> call = apiService
-                .getPlaces(Contact.Type.PLACE.toString(), search, perPage, page,
-                        global, location, radius);
-        call.enqueue(new Callback<ContactsResponse>() {
-            @Override
-            public void onResponse(Call<ContactsResponse> call, Response<ContactsResponse> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ContactsResponse> call, Throwable t) {
-                Log.e(TAG, "Error during getPeople", t);
-                callback.onResponse(false, null);
-            }
-        });
+        return apiService.getPlaces(Contact.Type.PLACE.toString(), search, perPage, page, global,
+                location, radius)
+                .doOnError(throwable -> Log.e(TAG, "Error during getPlaces", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -318,33 +191,18 @@ public final class OutfieldAPI {
      * @param latitude Latitude as a double.
      * @param longitude Longitude as a double.
      * @param search Search for something nearby (e.g. “GNC”). (optional)
-     * @param callback Callback to receive boolean success value and contacts array.
+     * @return {@link Single} containing list of nearby locations or null on failure.
      */
-    public static void explore(Double latitude, Double longitude, String search,
-                               final ResponseCallback<List<Contact>> callback) {
+    public static Single<List<Contact>> explore(Double latitude, Double longitude, String search) {
 
         String location = null;
         if (latitude != null && longitude != null) {
             location = latitude + "," + longitude;
         }
-        Call<ContactsResponse> call = apiService
-                .explore(location, search);
-        call.enqueue(new Callback<ContactsResponse>() {
-            @Override
-            public void onResponse(Call<ContactsResponse> call, Response<ContactsResponse> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContacts());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ContactsResponse> call, Throwable t) {
-                Log.e(TAG, "Error during explore", t);
-                callback.onResponse(false, null);
-            }
-        });
+        return apiService.explore(location, search)
+                .map(ContactsResponse::getContacts)
+                .doOnError(throwable -> Log.e(TAG, "Error during explore", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -352,33 +210,13 @@ public final class OutfieldAPI {
      * <p>
      * Attempts to retrieve contact with provided id.
      * @param contactId API ID of the contact to be retrieved.
-     * @param callback Callback to received boolean success value and retrieved contact.
+     * @return {@link Single} containing the retrieved contact or null on failure.
      */
-    public static void getContact(long contactId, final ResponseCallback<Contact> callback) {
-
-        if (contactId <= 0) {
-            Log.e(TAG, "Contact ID must be greater than 0.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Contact.Wrapper> call = apiService.getContact(contactId);
-        call.enqueue(new Callback<Contact.Wrapper>() {
-            @Override
-            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContact());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Contact> getContact(long contactId) {
+        return apiService.getContact(contactId)
+                .map(Contact.Wrapper::getContact)
+                .doOnError(throwable -> Log.e(TAG, "Error during getContact", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -386,33 +224,13 @@ public final class OutfieldAPI {
      * <p>
      * Add an organization's contact to the current user's “my contacts” list.
      * @param contactId API ID of the contact to be favored.
-     * @param callback Callback to receive boolean success value and favored contact.
+     * @return {@link Single} containing the favored contact or null on failure.
      */
-    public static void favorContact(long contactId, final ResponseCallback<Contact> callback) {
-
-        if (contactId <= 0) {
-            Log.e(TAG, "Contact ID must be greater than 0.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Contact.Wrapper> call = apiService.favorContact(contactId);
-        call.enqueue(new Callback<Contact.Wrapper>() {
-            @Override
-            public void onResponse(Call<Contact.Wrapper> call, Response<Contact.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getContact());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Contact.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during favorContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Contact> favorContact(long contactId) {
+        return apiService.favorContact(contactId)
+                .map(Contact.Wrapper::getContact)
+                .doOnError(throwable -> Log.e(TAG, "Error during favorContact", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -421,11 +239,13 @@ public final class OutfieldAPI {
      * Add an organization's contact to the current user's “my contacts” list,
      * while simultaneously updating the contact.
      * @param contact Contact object to be favored and updated.
+     * @return {@link Single} containing the favored contact or null on failure.
      */
-    public static Observable<Contact> updateAndFavorContact(Contact contact) {
+    public static Single<Contact> updateAndFavorContact(Contact contact) {
         return apiService.updateAndFavorContact(contact.wrap())
+                .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateAndFavorContact", throwable))
-                .map(Contact.Wrapper::getContact);
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -433,34 +253,14 @@ public final class OutfieldAPI {
      * <p>
      * Remove a contact from the current user's “my contacts” list, keep the contact in the
      * organization.
-     * @param contactId API ID of the contact to be unfavored.
-     * @param callback Callback to receive boolean success value.
+     * @param contact The contact to be deleted.
+     * @return {@link Single} containing the original {@link Contact} or null on failure.
      */
-    public static void unfavorContact(long contactId, final ResponseCallback<Void> callback) {
-
-        if (contactId <= 0) {
-            Log.e(TAG, "Contact ID must be greater than 0.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Void> call = apiService.unfavorContact(contactId);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, null);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error during unfavorContact", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Contact> unfavorContact(Contact contact) {
+        return apiService.unfavorContact(contact.getId())
+                .map(response -> (response.isSuccessful() || response.code() == 404) ? contact : null)
+                .doOnError(throwable -> Log.e(TAG, "Error during unfavorContact", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -470,9 +270,9 @@ public final class OutfieldAPI {
      * This method should not be used if the contact already has an ID. If the contact has an ID,
      * it already exists on the server and should be updated using {@link #updateContact}.
      * @param contact The contact to be uploaded.
-     * @return The created contact as an {@link Observable}.
+     * @return {@link Single} containing the created contact or null on failure.
      */
-    public static Observable<Contact> createContact(Contact contact) {
+    public static Single<Contact> createContact(Contact contact) {
         return apiService.createContact(contact.wrap())
                 .doOnError(throwable -> Log.e(TAG, "Error during createContact", throwable))
                 .map(Contact.Wrapper::getContact);
@@ -486,12 +286,13 @@ public final class OutfieldAPI {
      * not have an ID, it doesn't exist on the server yet, and needs to be created using
      * {@link #createContact}.
      * @param contact The contact to be updated.
-     * @return The updated contact as an {@link Observable}.
+     * @return {@link Single} containing the updated contact or null on failure.
      */
-    public static Observable<Contact> updateContact(Contact contact) {
+    public static Single<Contact> updateContact(Contact contact) {
         return apiService.updateContact(contact.getId(), contact.wrap())
+                .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateContact", throwable))
-                .map(Contact.Wrapper::getContact);
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -501,17 +302,13 @@ public final class OutfieldAPI {
      * contacts that already have an ID. If the contact does not have an ID, it doesn't
      * exist on the server yet and only needs to be deleted locally.
      * @param contact Contact to be deleted.
-     * @return Observer containing the original contact. If deletion failed, contact will be null.
+     * @return {@link Single} containing the original contact or null on failure.
      */
-    public static Observable<Contact> deleteContact(Contact contact) {
+    public static Single<Contact> deleteContact(Contact contact) {
         return apiService.deleteContact(contact.getId())
-                .flatMap(response -> {
-                    if (response.isSuccessful() || response.code() == 404) {
-                        return Observable.just(contact);
-                    } else {
-                        return null;
-                    }
-                });
+                .map(response -> (response.isSuccessful() || response.code() == 404) ? contact : null)
+                .doOnError(throwable -> Log.e(TAG, "Error during deleteContact", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     // TODO: public void uploadContactImages(List<Image> images, long contactId)
@@ -528,35 +325,19 @@ public final class OutfieldAPI {
      * @param perPage The number of interactions to retrieve per page. Defaults to 25 if null.
      * @param interactionType Only retrieve interactions of a particular type. (optional)
      * @param search Search interactions for provided text. (optional)
-     * @param callback Callback to receive boolean success value and response.
+     * @return {@link Single} containing the {@link InteractionsResponse} object or null on failure.
      */
-    public static void getInteractions(boolean onlyMe, Integer page, Integer perPage,
-                                           Interaction.Type interactionType, String search,
-                                           final ResponseCallback<InteractionsResponse> callback) {
-
+    public static Single<InteractionsResponse> getInteractions(boolean onlyMe, Integer page,
+                                                               Integer perPage,
+                                                               Interaction.Type interactionType,
+                                                               String search) {
         // Set default params
         if (page == null) page = 1;
         if (perPage == null) perPage = 25;
         String type = (interactionType != null) ? interactionType.toString() : null;
-
-        Call<InteractionsResponse> call = apiService
-                .getInteractions(onlyMe, page, perPage, type, search);
-        call.enqueue(new Callback<InteractionsResponse>() {
-            @Override
-            public void onResponse(Call<InteractionsResponse> call, Response<InteractionsResponse> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<InteractionsResponse> call, Throwable t) {
-                Log.e(TAG, "Error during getInteractions", t);
-                callback.onResponse(false, null);
-            }
-        });
+        return apiService.getInteractions(onlyMe, page, perPage, type, search)
+                .doOnError(throwable -> Log.e(TAG, "Error during getInteractions", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -564,33 +345,13 @@ public final class OutfieldAPI {
      * <p>
      * Attempts to retrieve interaction with provided ID.
      * @param interactionId API ID of interaction to be retrieved.
-     * @param callback Callback to receive boolean success value and retrieved contact.
+     * @return {@link Single} containing the retrieved {@link Interaction} or null on failure.
      */
-    public static void getInteraction(long interactionId, final ResponseCallback<Interaction> callback) {
-
-        if (interactionId <= 0) {
-            Log.e(TAG, "Interaction does not exist on server.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Interaction.Wrapper> call = apiService.getInteraction(interactionId);
-        call.enqueue(new Callback<Interaction.Wrapper>() {
-            @Override
-            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getInteraction());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getInteraction", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Interaction> getInteraction(long interactionId) {
+        return apiService.getInteraction(interactionId)
+                .map(Interaction.Wrapper::getInteraction)
+                .doOnError(throwable -> Log.e(TAG, "Error during getInteraction", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -601,39 +362,13 @@ public final class OutfieldAPI {
      * an ID, it already exists on the server and should be updated using
      * {@link #updateInteraction}.
      * @param interaction The interaction to be uploaded.
-     * @param callback Callback to receive boolean success value and created interaction.
+     * @return {@link Single} containing the created {@link Interaction} or null on failure.
      */
-    public static void createInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
-
-        if (interaction.getId() > 0) {
-            Log.e(TAG, "Interaction already exists on server");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        if (interaction.getInteractionType() == null) {
-            Log.e(TAG, "Interaction must have type");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Interaction.Wrapper> call = apiService.createInteraction(interaction.wrap());
-        call.enqueue(new Callback<Interaction.Wrapper>() {
-            @Override
-            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getInteraction());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during createInteraction", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Interaction> createInteraction(Interaction interaction) {
+        return apiService.createInteraction(interaction.wrap())
+                .map(Interaction.Wrapper::getInteraction)
+                .doOnError(throwable -> Log.e(TAG, "Error during createInteraction", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -644,40 +379,13 @@ public final class OutfieldAPI {
      * If the interaction does not have an ID, it doesn't exist on the server yet, and needs to be
      * created using {@link #createInteraction}.
      * @param interaction The interaction to be updated.
-     * @param callback Callback to receive boolean success value and updated interaction.
+     * @return {@link Single} containing the created {@link Interaction} or null on failure.
      */
-    public static void updateInteraction(Interaction interaction, final ResponseCallback<Interaction> callback) {
-
-        if (interaction.getId() <= 0) {
-            Log.e(TAG, "Interaction does not exist on server");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        if (interaction.getInteractionType() == null) {
-            Log.e(TAG, "Interaction must have type");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Interaction.Wrapper> call = apiService
-                .updateInteraction(interaction.getId(), interaction.wrap());
-        call.enqueue(new Callback<Interaction.Wrapper>() {
-            @Override
-            public void onResponse(Call<Interaction.Wrapper> call, Response<Interaction.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getInteraction());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Interaction.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during updateInteraction", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Interaction> updateInteraction(Interaction interaction) {
+        return apiService.updateInteraction(interaction.getId(), interaction.wrap())
+                .map(Interaction.Wrapper::getInteraction)
+                .doOnError(throwable -> Log.e(TAG, "Error during updateInteraction", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -686,34 +394,14 @@ public final class OutfieldAPI {
      * Deletes an existing interaction from the server. This method is only necessary for
      * interactions that already have an ID. If the interaction does not have an ID, it doesn't
      * exist on the server yet and only needs to be deleted locally.
-     * @param interactionId API ID of the interaction to be deleted.
-     * @param callback Callback to receive boolean success value.
+     * @param interaction Interaction to be deleted.
+     * @return {@link Single} containing the original {@link Interaction} or null on failure.
      */
-    public static void deleteInteraction(long interactionId, final ResponseCallback<Void> callback) {
-
-        if (interactionId <= 0) {
-            Log.e(TAG, "Interaction does not exist on server.");
-            callback.onResponse(true, null);
-            return;
-        }
-
-        Call<Void> call = apiService.deleteInteraction(interactionId);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, null);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error during deleteInteraction", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Interaction> deleteInteraction(Interaction interaction) {
+        return apiService.deleteInteraction(interaction.getId())
+                .map(response -> (response.isSuccessful() || response.code() == 404) ? interaction : null)
+                .doOnError(throwable -> Log.e(TAG, "Error during deleteInteraction", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     // TODO: public void uploadInteractionImages(List<Image> images, long interactionId)
@@ -730,41 +418,14 @@ public final class OutfieldAPI {
      * Creates a comment for an interaction on the server. This method should only be used on
      * comments that do not have an ID. If the comment has an ID, it already exists on the server
      * and should be updated using {@link #updateComment}.
-     * @param comment The comment to be uploaded.
-     * @param callback Callback to receive boolean success value and created comment.
+     * @param comment The {@link Comment} to be uploaded.
+     * @return {@link Single} containing the created {@link Comment} or null on failure.
      */
-    public static void createComment(Comment comment, final ResponseCallback<Comment> callback) {
-
-        if (comment.getId() > 0) {
-            Log.e(TAG, "Comment already exists on server.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        if (comment.getInteractionId() <= 0) {
-            Log.e(TAG, "Comment has no parent interaction on server.");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Comment.Wrapper> call = apiService
-                .createComment(comment.getInteractionId(), comment.wrap());
-        call.enqueue(new Callback<Comment.Wrapper>() {
-            @Override
-            public void onResponse(Call<Comment.Wrapper> call, Response<Comment.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getComment());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Comment.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during createComment", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Comment> createComment(Comment comment) {
+        return apiService.createComment(comment.getInteractionId(), comment.wrap())
+                .map(Comment.Wrapper::getComment)
+                .doOnError(throwable -> Log.e(TAG, "Error during createComment", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -773,34 +434,14 @@ public final class OutfieldAPI {
      * Updates a comment on the server. This method should only be used on comments that have an ID.
      * If the comment does not have an ID, it does not exist on the server yet and should be created
      * using {@link #createComment}.
-     * @param comment The comment to be updated.
-     * @param callback Callback to receive boolean success value and updated comment.
+     * @param comment The {@link Comment} to be updated.
+     * @return {@link Single} containing the updated {@link Comment} or null on failure.
      */
-    public static void updateComment(Comment comment, final ResponseCallback<Comment> callback) {
-
-        if (comment.getId() <= 0) {
-            Log.e(TAG, "Comment does not exist on server.");
-            callback.onResponse(false, null);
-        }
-
-        Call<Comment.Wrapper> call = apiService
-                .updateComment(comment.getId(), comment.wrap());
-        call.enqueue(new Callback<Comment.Wrapper>() {
-            @Override
-            public void onResponse(Call<Comment.Wrapper> call, Response<Comment.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getComment());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Comment.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during updateComment", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Comment> updateComment(Comment comment) {
+        return apiService.updateComment(comment.getId(), comment.wrap())
+                .map(Comment.Wrapper::getComment)
+                .doOnError(throwable -> Log.e(TAG, "Error during updateComment", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -809,33 +450,14 @@ public final class OutfieldAPI {
      * Deletes a comment on the server. This method is only necessary for comments that have an ID.
      * If the comment does not have an ID, it does not exist on the server yet and only needs to be
      * deleted locally.
-     * @param commentId API ID of the comment to be deleted.
-     * @param callback Callback to receive boolean success value.
+     * @param comment The {@link Comment} to be deleted.
+     * @return {@link Single} containing the original {@link Comment} or null on failure.
      */
-    public static void deleteComment(long commentId, final ResponseCallback<Void> callback) {
-
-        if (commentId <= 0) {
-            Log.e(TAG, "Comment does not exist on server.");
-            callback.onResponse(true, null);
-        }
-
-        Call<Void> call = apiService.deleteComment(commentId);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, null);
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error during deleteComment", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Comment> deleteComment(Comment comment) {
+        return apiService.deleteComment(comment.getId())
+                .map(response -> (response.isSuccessful() || response.code() == 404) ? comment : null)
+                .doOnError(throwable -> Log.e(TAG, "Error during deleteComment", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     //#############################################################################################
@@ -846,26 +468,13 @@ public final class OutfieldAPI {
      * <code>GET /api/v2/forms</code>
      * <p>
      * Retrieves all current interaction forms.
-     * @param callback Callback to receive boolean success value and array of forms
+     * @return {@link Single} containing current {@link Form Forms} or null on failure.
      */
-    public static void getLatestForms(final ResponseCallback<List<Form>> callback) {
-        Call<Form.ArrayWrapper> call = apiService.getLatestForms();
-        call.enqueue(new Callback<Form.ArrayWrapper>() {
-            @Override
-            public void onResponse(Call<Form.ArrayWrapper> call, Response<Form.ArrayWrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getForms());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Form.ArrayWrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getLatestForms", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<List<Form>> getLatestForms() {
+        return apiService.getLatestForms()
+                .map(Form.ArrayWrapper::getForms)
+                .doOnError(throwable -> Log.e(TAG, "Error during getForms", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     /**
@@ -873,33 +482,13 @@ public final class OutfieldAPI {
      * <p>
      * Retrieves form matching specified form ID.
      * @param formId API ID of form to be retrieved.
-     * @param callback Callback to receive boolean success value and retrieved form.
+     * @return {@link Single} containing the retrieved {@link Form} or null on failure.
      */
-    public static void getForm(long formId, final ResponseCallback<Form> callback) {
-
-        if (formId <= 0) {
-            Log.e(TAG, "Form does not exist on server");
-            callback.onResponse(false, null);
-            return;
-        }
-
-        Call<Form.Wrapper> call = apiService.getForm(formId);
-        call.enqueue(new Callback<Form.Wrapper>() {
-            @Override
-            public void onResponse(Call<Form.Wrapper> call, Response<Form.Wrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getForm());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Form.Wrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getForm", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<Form> getForm(long formId) {
+        return apiService.getForm(formId)
+                .map(Form.Wrapper::getForm)
+                .doOnError(throwable -> Log.e(TAG, "Error during getForm", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     //#############################################################################################
@@ -910,26 +499,13 @@ public final class OutfieldAPI {
      * <code>GET /api/v2/notifications</code>
      * <p>
      * Retrieves latest page of notifications for user
-     * @param callback Callback to receive boolean success value and array of notifications.
+     * @return Latest page of {@link Notification Notifications} for the user or null on failure.
      */
-    public static void getNotifications(final ResponseCallback<List<Notification>> callback) {
-        Call<Notification.ArrayWrapper> call = apiService.getNotifications();
-        call.enqueue(new Callback<Notification.ArrayWrapper>() {
-            @Override
-            public void onResponse(Call<Notification.ArrayWrapper> call, Response<Notification.ArrayWrapper> response) {
-                if (response.isSuccessful()) {
-                    callback.onResponse(true, response.body().getNotifications());
-                } else {
-                    onFailure(call, new Exception("Status code: " + response.code()));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Notification.ArrayWrapper> call, Throwable t) {
-                Log.e(TAG, "Error during getNotifications", t);
-                callback.onResponse(false, null);
-            }
-        });
+    public static Single<List<Notification>> getNotifications() {
+        return apiService.getNotifications()
+                .map(Notification.ArrayWrapper::getNotifications)
+                .doOnError(throwable -> Log.e(TAG, "Error during getNotifications", throwable))
+                .onErrorReturn(throwable -> null);
     }
 
     //#############################################################################################
@@ -943,21 +519,22 @@ public final class OutfieldAPI {
      * @param onlyMe When false, gets interactions by all team members. Defaults to false if null.
      * @param perSync The number of items to retrieve per page. Defaults to 50 if null.
      * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
-     * @return Observable containing the {@link SyncResponse}.
+     * @return {@link Single} containing the {@link SyncResponse} or null on failure.
      */
-    public static Observable<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
+    public static Single<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
 
         // Set default params
         if (onlyMe == null) onlyMe = false;
         if (perSync == null) perSync = 50;
 
         return apiService.sync(onlyMe, perSync, syncToken)
-                .doOnError(throwable -> Log.e(TAG, "Error during sync", throwable))
                 .map(response -> {
                     String status = response.headers().get(Constants.Headers.SYNC_STATUS);
                     SyncResponse syncResponse = response.body();
                     syncResponse.setStatus(status);
                     return syncResponse;
-                });
+                })
+                .doOnError(throwable -> Log.e(TAG, "Error during sync", throwable))
+                .onErrorReturn(throwable -> null);
     }
 }

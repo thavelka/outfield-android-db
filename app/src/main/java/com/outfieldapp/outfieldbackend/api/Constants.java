@@ -16,6 +16,7 @@ public class Constants {
     public static class Prefs {
         public static final String HAS_TEAM_ACTIVITY = "hasTeamActivity";
         public static final String CURRENT_USER_ID = "currentUserId";
+        public static final String CURRENT_FORM_IDS = "currentFormIds";
     }
 
     /* HTTP Header Keys */
