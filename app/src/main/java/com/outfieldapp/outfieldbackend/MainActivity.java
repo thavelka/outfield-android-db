@@ -10,7 +10,9 @@ import com.outfieldapp.outfieldbackend.api.SyncController;
 import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
+import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.Phone;
+import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.progressBar).setEnabled(true);
-        OutfieldApp.getSharedPrefs().edit().clear().commit();
-        OutfieldApp.getDatabase().clear();
+//        OutfieldApp.getSharedPrefs().edit().clear().commit();
+//        OutfieldApp.getDatabase().clear();
         signIn();
     }
 
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
                     if (user != null) {
                         Log.d(TAG, "Email: " + user.getEmail() + " Token: " + user.getToken());
                         OutfieldApp.getSharedPrefs().edit()
+                                .putLong(Constants.Prefs.CURRENT_USER_ID, user.getId())
                                 .putString(Constants.Headers.EMAIL, user.getEmail())
                                 .putString(Constants.Headers.AUTH_TOKEN, user.getToken())
                                 .commit();
@@ -49,24 +52,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void runTest() {
-        // insert some contacts
-//        Contact contact = getSampleContact();
-//        contact.setName("NEW BACKEND 10");
-//        contact.setDirty(true);
-//        contact.save();
-//
-//        Contact contact1 = getSampleContact();
-//        contact1.setName("NEW BACKEND 8 EDIT 2");
-//        contact1.setDirty(true);
-//        contact1.setId(55618);
-//        contact1.save();
-//
-//        Contact contact2 = getSampleContact();
-//        contact2.setName("NEW BACKEND 9");
-//        contact2.setDirty(true);
-//        contact2.setDestroy(true);
-//        contact2.setId(55617);
-//        contact2.save();
+        User user = User.getCurrentUser();
+        Contact contact = Contact.getContactWithId(51927);
+        if (contact != null && user != null) {
+            Interaction interaction = new Interaction();
+            interaction.setInteractionType(Interaction.Type.NOTE);
+            interaction.setContactId(contact.getId());
+            interaction.setNotes("Testing from new android backend 2");
+            interaction.setUser(user);
+            interaction.setDirty(true);
+            interaction.save();
+        }
 
         SyncController.getInstance().doSync();
     }
