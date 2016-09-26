@@ -17,7 +17,7 @@ public class Form extends Model {
 
     public static final String TAG = Form.class.getSimpleName();
 
-    private long rowId;
+    private transient long rowId;
 
     @SerializedName(Keys.Form.ID)
     private long formId;

@@ -17,7 +17,7 @@ public class Notification extends Model {
 
     public static final String TAG = Notification.class.getSimpleName();
 
-    private long rowId;
+    private transient long rowId;
 
     @SerializedName(Keys.Notification.ID)
     private long notificationId;

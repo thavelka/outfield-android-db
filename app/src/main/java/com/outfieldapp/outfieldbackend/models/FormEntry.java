@@ -14,9 +14,9 @@ public class FormEntry extends Model {
 
     public static final String TAG = FormEntry.class.getSimpleName();
 
-    private long rowId;
-    private long interactionId;
-    private long formId;
+    private transient long rowId;
+    private transient long interactionId;
+    private transient long formId;
 
     @SerializedName(Keys.Interaction.FormEntry.ID)
     private long formFieldId;

@@ -14,9 +14,9 @@ public class Comment extends Model {
 
     public static final String TAG = Comment.class.getSimpleName();
 
-    private long rowId;
-    private long interactionId;
-    private boolean dirty;
+    private transient long rowId;
+    private transient long interactionId;
+    private transient boolean dirty;
 
     @SerializedName(Keys.Comment.ID)
     private long commentId;

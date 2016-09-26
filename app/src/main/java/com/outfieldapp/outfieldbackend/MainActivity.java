@@ -10,9 +10,7 @@ import com.outfieldapp.outfieldbackend.api.SyncController;
 import com.outfieldapp.outfieldbackend.models.Address;
 import com.outfieldapp.outfieldbackend.models.Contact;
 import com.outfieldapp.outfieldbackend.models.Email;
-import com.outfieldapp.outfieldbackend.models.Interaction;
 import com.outfieldapp.outfieldbackend.models.Phone;
-import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +28,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.progressBar).setEnabled(true);
 //        OutfieldApp.getSharedPrefs().edit().clear().commit();
 //        OutfieldApp.getDatabase().clear();
-        signIn();
+//        signIn();
+        runTest();
     }
 
     public void signIn() {
@@ -52,17 +51,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void runTest() {
-        User user = User.getCurrentUser();
-        Contact contact = Contact.getContactWithId(51927);
-        if (contact != null && user != null) {
-            Interaction interaction = new Interaction();
-            interaction.setInteractionType(Interaction.Type.NOTE);
-            interaction.setContactId(contact.getId());
-            interaction.setNotes("Testing from new android backend 2");
-            interaction.setUser(user);
-            interaction.setDirty(true);
-            interaction.save();
-        }
+//        User user = User.getCurrentUser();
+//        Contact contact = Contact.getContactWithId(51927);
+//        if (contact != null && user != null) {
+//            Interaction interaction = new Interaction();
+//            interaction.setInteractionType(Interaction.Type.NOTE);
+//            interaction.setContactId(contact.getId());
+//            interaction.setNotes("Testing from new android backend 2");
+//            interaction.setUser(user);
+//            interaction.setDirty(true);
+//            interaction.save();
+//        }
 
         SyncController.getInstance().doSync();
     }

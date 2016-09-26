@@ -17,8 +17,9 @@ public class PlannedInteraction extends Model {
 
     public static final String TAG = PlannedInteraction.class.getSimpleName();
 
-    private long rowId;
-    private boolean dirty;
+    private transient long rowId;
+    private transient boolean dirty;
+    private transient boolean destroy;
 
     @SerializedName(Keys.Interaction.ID)
     private long interactionId;
@@ -30,19 +31,17 @@ public class PlannedInteraction extends Model {
     private String shareUrl = "";
     @SerializedName(Keys.Interaction.CREATED_AT)
     private String date = "";
-    @SerializedName(Keys.Interaction.DESTROY)
-    private boolean destroy;
 
     @SerializedName(Keys.Interaction.INTERACTION_DETAILS)
-    InteractionDetails interactionDetails = new InteractionDetails();
+    private InteractionDetails interactionDetails = new InteractionDetails();
     @SerializedName(Keys.Interaction.USER)
-    User user;
+    private User user;
     @SerializedName(Keys.Interaction.CONTACTS)
-    List<Contact> contacts = new ArrayList<>();
+    private List<Contact> contacts = new ArrayList<>();
     @SerializedName(Keys.Interaction.CONTACT_IDS)
-    List<Long> contactIds = new ArrayList<>();
+    private List<Long> contactIds = new ArrayList<>();
     @SerializedName(Keys.Interaction.COMMENTS)
-    List<Comment> comments = new ArrayList<>();
+    private List<Comment> comments = new ArrayList<>();
 
     /* Constructors */
     public PlannedInteraction() {}

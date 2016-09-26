@@ -21,9 +21,10 @@ public class Interaction extends Model {
 
     public static final String TAG = Interaction.class.getSimpleName();
 
-    private long rowId;
-    private boolean draft;
-    private boolean dirty;
+    private transient long rowId;
+    private transient boolean draft;
+    private transient boolean dirty;
+    private transient boolean destroy;
 
     @SerializedName(Keys.Interaction.ID)
     private long interactionId;
@@ -37,27 +38,25 @@ public class Interaction extends Model {
     private String createdAt = "";
     @SerializedName(Keys.Interaction.IN_TEAM_ACTIVITY)
     private boolean inTeamActivity;
-    @SerializedName(Keys.Interaction.DESTROY)
-    private boolean destroy;
 
     @SerializedName(Keys.Interaction.USER)
-    User user;
+    private User user;
     @SerializedName(Keys.Interaction.INTERACTION_DETAILS)
-    InteractionDetails interactionDetails = new InteractionDetails();
+    private InteractionDetails interactionDetails = new InteractionDetails();
     @SerializedName(Keys.Interaction.CONTACTS)
-    List<Contact> contacts = new ArrayList<>();
+    private List<Contact> contacts = new ArrayList<>();
     @SerializedName(Keys.Interaction.CONTACT_IDS)
-    List<Long> contactIds = new ArrayList<>();
+    private List<Long> contactIds = new ArrayList<>();
     @SerializedName(Keys.Interaction.FORMS)
-    List<Form> forms = new ArrayList<>();
+    private List<Form> forms = new ArrayList<>();
     @SerializedName(Keys.Interaction.FORM_IDS)
-    List<Long> formIds = new ArrayList<>();
+    private List<Long> formIds = new ArrayList<>();
     @SerializedName(Keys.Interaction.FORM_ENTRIES)
-    List<FormEntryGroup> formEntryGroups = new ArrayList<>();
+    private List<FormEntryGroup> formEntryGroups = new ArrayList<>();
     @SerializedName(Keys.Interaction.COMMENTS)
-    List<Comment> comments = new ArrayList<>();
+    private List<Comment> comments = new ArrayList<>();
     @SerializedName(Keys.Interaction.IMAGES)
-    List<Image> images = new ArrayList<>();
+    private List<Image> images = new ArrayList<>();
 
     /* Constructors */
     public Interaction() {}
@@ -81,9 +80,23 @@ public class Interaction extends Model {
     public List<FormEntryGroup> getFormEntryGroups() { return formEntryGroups; }
     public List<Comment> getComments() { return comments; }
     public List<Image> getImages() { return images; }
-    public float getDuration() { return interactionDetails.duration; }
-    public float getLatitude() { return interactionDetails.getLocation().latitude; }
-    public float getLongitude() { return interactionDetails.getLocation().longitude; }
+    public Float getDuration() {
+        return (interactionDetails != null) ? interactionDetails.duration : null;
+    }
+    public Float getLatitude() {
+        if (interactionDetails != null && interactionDetails.getLocation() != null) {
+            return interactionDetails.getLocation().latitude;
+        } else {
+            return null;
+        }
+    }
+    public Float getLongitude() {
+        if (interactionDetails != null && interactionDetails.getLocation() != null) {
+            return interactionDetails.getLocation().longitude;
+        } else {
+            return null;
+        }
+    }
     public String getFormIdsAsString() {
         if (formIds == null || formIds.isEmpty()) {
             return "";
@@ -96,19 +109,28 @@ public class Interaction extends Model {
     public void setId(long id) { interactionId = id; }
     public void setInteractionType(Type type) { interactionType = type.toString(); }
     public void setNotes(String notes) { this.notes = notes;}
-    public void setDuration(float duration) { interactionDetails.duration = duration; }
-    public void setLocation(float lat, float lng) { interactionDetails.setLocation(lat, lng); }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
     public void setInTeamActivity(boolean inTeamActivity) { this.inTeamActivity = inTeamActivity; }
     public void setDraft(boolean draft) { this.draft = draft; }
     public void setDirty(boolean dirty) { this.dirty = dirty; }
     public void setDestroy(boolean destroy) { this.destroy = destroy; }
-    public void setContactId(long id) { contactIds.set(0, id); }
+    public void setContactId(long id) {
+        contactIds = new ArrayList<>();
+        contactIds.add(id);
+    }
     public void setUser(User user) { this.user = user; }
     public void setFormIds(List<Long> formIds) { this.formIds = formIds; }
     public void setFormEntryGroups(List<FormEntryGroup> groups) { formEntryGroups = groups; }
     public void setComments(List<Comment> comments) { this.comments = comments; }
     public void setImages(List<Image> images) { this.images = images; }
+    public void setDuration(float duration) {
+        if (interactionDetails == null) interactionDetails = new InteractionDetails();
+        interactionDetails.duration = duration;
+    }
+    public void setLocation(float lat, float lng) {
+        if (interactionDetails == null) interactionDetails = new InteractionDetails();
+        interactionDetails.setLocation(lat, lng);
+    }
 
     /* Database Access */
     /**
@@ -151,6 +173,8 @@ public class Interaction extends Model {
 
         if (interactionType.equalsIgnoreCase("planned_check_in")
                 || interactionType.equalsIgnoreCase("planned_meeting")) return false;
+
+        if (interactionType.equalsIgnoreCase("note")) interactionDetails = null;
 
         // Insert user
         if (user != null) user.save();
@@ -291,8 +315,12 @@ public class Interaction extends Model {
             destroy = cursor.getInt(destroyIndex) > 0;
 
             // Load interaction detail values
-            interactionDetails.duration = cursor.getFloat(durationIndex);
-            interactionDetails.setLocation(cursor.getFloat(latitudeIndex), cursor.getFloat(longitudeIndex));
+            if (interactionType.equalsIgnoreCase("note")) {
+                interactionDetails = null;
+            } else {
+                interactionDetails.duration = cursor.getFloat(durationIndex);
+                interactionDetails.setLocation(cursor.getFloat(latitudeIndex), cursor.getFloat(longitudeIndex));
+            }
 
             // Load user
             long userId = cursor.getLong(userIdIndex);
@@ -301,8 +329,10 @@ public class Interaction extends Model {
             // Load contact
             long contactId = cursor.getLong(contactIdIndex);
             if (contactId != 0) {
-                contactIds.set(0, contactId);
-                contacts.set(0, Contact.getContactWithId(contactId));
+                contacts = new ArrayList<>();
+                contactIds = new ArrayList<>();
+                contactIds.add(contactId);
+                contacts.add(Contact.getContactWithId(contactId));
             }
 
             SQLiteDatabase db = OutfieldApp.getDatabase().getReadableDatabase();
@@ -344,44 +374,45 @@ public class Interaction extends Model {
             if (imageCursor != null) imageCursor.close();
 
             // Load forms
-            formIds.clear();
-            forms.clear();
-            Map<Long, FormEntryGroup> groupMap = new HashMap<>();
+            formIds = new ArrayList<>();
+            forms = new ArrayList<>();
             String formIdString = cursor.getString(formIdsIndex);
-            List<String> formIdStringArray = new ArrayList<>();
-            Collections.addAll(formIdStringArray, TextUtils.split(formIdString, ","));
+            if (formIdString != null) {
+                Map<Long, FormEntryGroup> groupMap = new HashMap<>();
+                List<String> formIdStringArray = new ArrayList<>();
+                Collections.addAll(formIdStringArray, TextUtils.split(formIdString, ","));
 
-            for (String s : formIdStringArray) {
-                long formId = Long.parseLong(s);
-                Form form = Form.getFormWithId(formId);
-                if (form != null) {
-                    formIds.add(formId);
-                    forms.add(form);
-                    FormEntryGroup group = new FormEntryGroup();
-                    group.setFormId(formId);
-                    groupMap.put(formId, group);
+                for (String s : formIdStringArray) {
+                    long formId = Long.parseLong(s);
+                    Form form = Form.getFormWithId(formId);
+                    if (form != null) {
+                        formIds.add(formId);
+                        forms.add(form);
+                        FormEntryGroup group = new FormEntryGroup();
+                        group.setFormId(formId);
+                        groupMap.put(formId, group);
+                    }
                 }
+
+                // Load entries
+                Cursor entryCursor = db.query(
+                        OutfieldContract.FormEntry.TABLE_NAME,
+                        null,
+                        OutfieldContract.FormEntry.INTERACTION_ID + "=?",
+                        new String[]{String.valueOf(interactionId)},
+                        null,
+                        null,
+                        null
+                );
+
+                while (entryCursor != null && entryCursor.moveToNext()) {
+                    FormEntry entry = new FormEntry(entryCursor);
+                    FormEntryGroup group = groupMap.get(entry.getFormId());
+                    if (group != null) group.addFormEntry(entry);
+                }
+
+                if (entryCursor != null) entryCursor.close();
             }
-
-            // Load entries
-            Cursor entryCursor = db.query(
-                    OutfieldContract.FormEntry.TABLE_NAME,
-                    null,
-                    OutfieldContract.FormEntry.INTERACTION_ID + "=?",
-                    new String[]{String.valueOf(interactionId)},
-                    null,
-                    null,
-                    null
-            );
-
-            while (entryCursor != null && entryCursor.moveToNext()) {
-                FormEntry entry = new FormEntry(entryCursor);
-                FormEntryGroup group = groupMap.get(entry.getFormId());
-                if (group != null) group.addFormEntry(entry);
-            }
-
-            if (entryCursor != null) entryCursor.close();
-
 
         } catch (Exception e) {
             Log.e(TAG, "Error during loadFromCursor()", e);
@@ -482,24 +513,25 @@ public class Interaction extends Model {
         @SerializedName(Keys.Interaction.InteractionDetails.ID)
         long id;
         @SerializedName(Keys.Interaction.InteractionDetails.EDITED_DURATION)
-        float duration;
+        Float duration = null;
         @SerializedName(Keys.Interaction.InteractionDetails.PATH)
         List<Location> locations = new ArrayList<>();
 
-        public void setLocation(float latitude, float longitude) {
-            locations.set(0, new Location(latitude, longitude));
+        void setLocation(float latitude, float longitude) {
+            locations.clear();
+            locations.add(new Location(latitude, longitude));
         }
 
-        public Location getLocation() {
-            return (!locations.isEmpty()) ? locations.get(0) : new Location(0,0);
+        Location getLocation() {
+            return (!locations.isEmpty()) ? locations.get(0) : null;
         }
 
         private static class Location {
             long id;
             @SerializedName(Keys.Interaction.InteractionDetails.Location.LATITUDE)
-            float latitude;
+            Float latitude = null;
             @SerializedName(Keys.Interaction.InteractionDetails.Location.LONGITUDE)
-            float longitude;
+            Float longitude = null;
 
             Location(float latitude, float longitude) {
                 this.latitude = latitude;
