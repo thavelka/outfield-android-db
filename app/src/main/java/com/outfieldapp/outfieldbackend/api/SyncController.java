@@ -1,5 +1,6 @@
 package com.outfieldapp.outfieldbackend.api;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -22,8 +23,6 @@ import java.util.Set;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 
-// TODO: Implement Counter class or RxJava
-
 public class SyncController {
     private static final String TAG = SyncController.class.getSimpleName();
     private static SyncController instance = new SyncController();
@@ -34,6 +33,7 @@ public class SyncController {
 
     private boolean isSyncing;
     private int progress;
+    private long startTime;
     private int syncTotal;
     private boolean userInfoCurrent;
 
@@ -45,7 +45,8 @@ public class SyncController {
         }
 
         Log.d(TAG, "Starting sync");
-        // TODO: Send broadcast intent
+        Intent intent = new Intent(Constants.Intents.SYNC_BEGIN_FILTER);
+        OutfieldApp.getContext().sendBroadcast(intent);
 
         isSyncing = true;
         progress = 0;
@@ -57,10 +58,12 @@ public class SyncController {
                 syncForms(),
                 syncContacts(),
                 syncInteractions(),
-                syncComments(),
-                syncNotifications()
+                syncComments()
         )
-                .doOnCompleted(this::sync)
+                .doOnCompleted(() -> {
+                    startTime = System.currentTimeMillis();
+                    sync();
+                })
                 .doOnError(throwable -> onSyncFinished(false))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
@@ -425,31 +428,31 @@ public class SyncController {
         OutfieldAPI.sync(false, 50, syncToken)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnNext(syncResponse -> {
+                .doOnNext(response -> {
                     // Save new sync token
-                    String newToken = syncResponse.getToken();
+                    String newToken = response.getToken();
                     SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
                     editor.putString(Constants.Headers.SYNC_TOKEN, newToken);
                     editor.commit();
 
                     // If not finished, call sync again
-                    if (syncResponse.getStatus().equals("more")) {
+                    if (response.getStatus().equals("more")) {
                         sync();
                     }
 
                     // Get changes from response
                     List<Contact> contacts = new ArrayList<Contact>();
                     List<Integer> deletedContacts = new ArrayList<Integer>();
-                    if (syncResponse.getContacts() != null) {
-                        contacts.addAll(syncResponse.getContacts().getCurrentContacts());
-                        deletedContacts.addAll(syncResponse.getContacts().getDeletedContactIds());
+                    if (response.getContacts() != null) {
+                        contacts.addAll(response.getContacts().getCurrentContacts());
+                        deletedContacts.addAll(response.getContacts().getDeletedContactIds());
                     }
 
                     List<Interaction> interactions = new ArrayList<Interaction>();
                     List<Integer> deletedInteractions = new ArrayList<Integer>();
-                    if (syncResponse.getInteractions() != null) {
-                        interactions.addAll(syncResponse.getInteractions().getCurrentInteractions());
-                        deletedInteractions.addAll(syncResponse.getInteractions().getDeletedInteractionIds());
+                    if (response.getInteractions() != null) {
+                        interactions.addAll(response.getInteractions().getCurrentInteractions());
+                        deletedInteractions.addAll(response.getInteractions().getDeletedInteractionIds());
                     }
 
                     // Create/update interactions from server
@@ -484,18 +487,38 @@ public class SyncController {
                     }
                     db.setTransactionSuccessful();
                     db.endTransaction();
-                    // TODO: update progress
+
+                    // Update progress
+                    Intent intent = new Intent(Constants.Intents.SYNC_PROGRESS_FILTER);
+                    if (syncTotal == 0) syncTotal = response.getSyncCount();
+                    int remainingCount = response.getRemainingCount();
+                    progress = syncTotal > 0
+                            ? (syncTotal - remainingCount) * 100 / syncTotal
+                            : 100;
+                    intent.putExtra(Constants.Intents.SYNC_PROGRESS_KEY, progress);
+
+                    // Calculate time remaining
+                    long elapsed = System.currentTimeMillis() - startTime;
+                    long avgMillisPerItem = elapsed / (syncTotal - remainingCount);
+                    long millisRemaining = avgMillisPerItem * remainingCount;
+                    if (response.getContactsCount() + response.getInteractionsCount() > 0) {
+                        intent.putExtra(Constants.Intents.SYNC_TIME_REMAINING_KEY, millisRemaining);
+                    }
+
+                    // Send progress intent
+                    OutfieldApp.getContext().sendBroadcast(intent);
 
                     // Sync notifications and disable loading screen for future app launches
-                    if (syncResponse.getStatus().equals("done")) {
-                        syncNotifications();
-                        // TODO: mark showLoadingScreen false
-                        onSyncFinished(true);
+                    if (response.getStatus().equals("done")) {
+                        syncNotifications()
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(Schedulers.io())
+                                .subscribe(this::onSyncFinished,
+                                        throwable -> onSyncFinished(false));
+                        prefs.edit().putBoolean(Constants.Prefs.SHOW_LOADING_SCREEN, false).apply();
                     }
                 })
-                .doOnError(throwable -> {
-                    onSyncFinished(false);
-                })
+                .doOnError(throwable -> onSyncFinished(false))
                 .map(syncResponse -> true)
                 .onErrorReturn(throwable -> false)
                 .subscribe();
@@ -508,7 +531,9 @@ public class SyncController {
     private void onSyncFinished(boolean success) {
         isSyncing = false;
         Log.d(TAG, "Sync finished. Success = " + success);
-        // TODO: Send broadcast intent
+        Intent intent = new Intent(Constants.Intents.SYNC_END_FILTER);
+        intent.putExtra(Constants.Intents.SYNC_SUCCESS_KEY, success);
+        OutfieldApp.getContext().sendBroadcast(intent);
     }
 
     private void reset() {

@@ -1,6 +1,7 @@
 package com.outfieldapp.outfieldbackend.api;
 
 import com.outfieldapp.outfieldbackend.BuildConfig;
+import com.outfieldapp.outfieldbackend.OutfieldApp;
 
 /**
  * Contains constants necessary for interaction with the Outfield REST API.
@@ -12,11 +13,21 @@ public class Constants {
             ? "https://infield.outfieldapp.com/api/v2/"
             : "https://run.outfieldapp.com/api/v2/";
 
+    /* Intent */
+    public static class Intents {
+        public static final String SYNC_BEGIN_FILTER = OutfieldApp.appName + "_syncBegin";
+        public static final String SYNC_END_FILTER = OutfieldApp.appName + "_syncEnd";
+        public static final String SYNC_PROGRESS_FILTER = OutfieldApp.appName + "_syncProgress";
+        public static final String SYNC_PROGRESS_KEY = "progress";
+        public static final String SYNC_TIME_REMAINING_KEY = "timeRemaining";
+        public static final String SYNC_SUCCESS_KEY = "success";
+    }
     /* Shared Prefs Keys*/
     public static class Prefs {
         public static final String HAS_TEAM_ACTIVITY = "hasTeamActivity";
         public static final String CURRENT_USER_ID = "currentUserId";
         public static final String CURRENT_FORM_IDS = "currentFormIds";
+        public static final String SHOW_LOADING_SCREEN = "showLoadingScreen";
     }
 
     /* HTTP Header Keys */
