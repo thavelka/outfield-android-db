@@ -14,7 +14,7 @@ import com.outfieldapp.outfieldbackend.models.User;
 
 import java.util.List;
 
-import rx.Single;
+import rx.Observable;
 
 public final class OutfieldAPI {
 
@@ -42,9 +42,9 @@ public final class OutfieldAPI {
      * user's info. If an error is encountered, the user will be null.
      * @param email The user's email address.
      * @param password The user's password
-     * @return {@link Single} containing the user object or null on failure.
+     * @return {@link Observable} containing the user object or null on failure.
      */
-    public static Single<User> signIn(String email, String password) {
+    public static Observable<User> signIn(String email, String password) {
         return apiService.signIn(email, password)
                 .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during signIn", throwable))
@@ -57,9 +57,9 @@ public final class OutfieldAPI {
      * Checks to see if account already exists for this email address. If so, user info is returned.
      * If user doesn't exist, <code>success</code> will be false.
      * @param email The user's email address.
-     * @return {@link Single} containing the user object or null if the user does not exist.
+     * @return {@link Observable} containing the user object or null if the user does not exist.
      */
-    public static Single<User> checkAccountExists(String email) {
+    public static Observable<User> checkAccountExists(String email) {
         return apiService.checkAccountExists(email)
                 .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during checkAccountExists", throwable))
@@ -70,9 +70,9 @@ public final class OutfieldAPI {
      * <code>GET /api/v2/me</code>
      * <p>
      * Retrieves detailed information about user.
-     * @return {@link Single} containing the user object or null on failure.
+     * @return {@link Observable} containing the user object or null on failure.
      */
-    public static Single<User> getUserDetails() {
+    public static Observable<User> getUserDetails() {
         return apiService.getUserDetails()
                 .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during getUserDetails", throwable))
@@ -84,9 +84,9 @@ public final class OutfieldAPI {
      * <p>
      * Updates user's information.
      * @param user The user object to be sent to the server.
-     * @return {@link Single} containing the updated user or null on failure.
+     * @return {@link Observable} containing the updated user or null on failure.
      */
-    public static Single<User> updateUser(User user) {
+    public static Observable<User> updateUser(User user) {
         return apiService.updateUser(user.wrap())
                 .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateUser", throwable))
@@ -101,9 +101,9 @@ public final class OutfieldAPI {
      * @param name The user's full name.
      * @param password The user's password.
      * @param orgName Name of the organization to be created.
-     * @return {@link Single} containing newly created user or null on failure.
+     * @return {@link Observable} containing newly created user or null on failure.
      */
-    public static Single<User> signUp(String email, String name, String password, String orgName) {
+    public static Observable<User> signUp(String email, String name, String password, String orgName) {
         return apiService.signUp(email, name, password, password, orgName)
                 .map(User.Wrapper::getUser)
                 .doOnError(throwable -> Log.e(TAG, "Error during signUp", throwable))
@@ -115,9 +115,9 @@ public final class OutfieldAPI {
      * <p>
      * Sends email to specified address with a link to reset password.
      * @param email The user's email address.
-     * @return {@link Single} containing boolean success value.
+     * @return {@link Observable} containing boolean success value.
      */
-    public static Single<Boolean> resetPassword(String email) {
+    public static Observable<Boolean> resetPassword(String email) {
         return apiService.resetPassword(email)
                 .map(aVoid -> true)
                 .doOnError(throwable -> Log.e(TAG, "Error during resetPassword", throwable))
@@ -138,9 +138,9 @@ public final class OutfieldAPI {
      * @param perPage The number of contacts to retrieve per page. Defauts to 25 if null.
      * @param global Retrieves all places if true, only favored places if false or null.
      * @param search Search contacts for the given query. Can be null.
-     * @return {@link Single} containing a {@link ContactsResponse} object or null on failure.
+     * @return {@link Observable} containing a {@link ContactsResponse} object or null on failure.
      */
-    public static Single<ContactsResponse> getPeople(Integer page, Integer perPage, Boolean global, String search) {
+    public static Observable<ContactsResponse> getPeople(Integer page, Integer perPage, Boolean global, String search) {
         // Set default parameter values
         if (page == null) page = 1;
         if (perPage == null) perPage = 25;
@@ -162,9 +162,9 @@ public final class OutfieldAPI {
      * @param latitude Latitude as a double, used to get nearby places. (optional)
      * @param longitude Longitude as a double, used to get nearby places. (optional)
      * @param radius Radius in miles, used to get nearby places. (optional)
-     * @return {@link Single} containing a {@link ContactsResponse} object or null on failure.
+     * @return {@link Observable} containing a {@link ContactsResponse} object or null on failure.
      */
-    public static Single<ContactsResponse> getPlaces(Integer page, Integer perPage, Boolean global,
+    public static Observable<ContactsResponse> getPlaces(Integer page, Integer perPage, Boolean global,
                                                      String search, Double latitude, Double longitude,
                                                      Integer radius) {
 
@@ -191,9 +191,9 @@ public final class OutfieldAPI {
      * @param latitude Latitude as a double.
      * @param longitude Longitude as a double.
      * @param search Search for something nearby (e.g. “GNC”). (optional)
-     * @return {@link Single} containing list of nearby locations or null on failure.
+     * @return {@link Observable} containing list of nearby locations or null on failure.
      */
-    public static Single<List<Contact>> explore(Double latitude, Double longitude, String search) {
+    public static Observable<List<Contact>> explore(Double latitude, Double longitude, String search) {
 
         String location = null;
         if (latitude != null && longitude != null) {
@@ -210,9 +210,9 @@ public final class OutfieldAPI {
      * <p>
      * Attempts to retrieve contact with provided id.
      * @param contactId API ID of the contact to be retrieved.
-     * @return {@link Single} containing the retrieved contact or null on failure.
+     * @return {@link Observable} containing the retrieved contact or null on failure.
      */
-    public static Single<Contact> getContact(long contactId) {
+    public static Observable<Contact> getContact(long contactId) {
         return apiService.getContact(contactId)
                 .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during getContact", throwable))
@@ -224,9 +224,9 @@ public final class OutfieldAPI {
      * <p>
      * Add an organization's contact to the current user's “my contacts” list.
      * @param contactId API ID of the contact to be favored.
-     * @return {@link Single} containing the favored contact or null on failure.
+     * @return {@link Observable} containing the favored contact or null on failure.
      */
-    public static Single<Contact> favorContact(long contactId) {
+    public static Observable<Contact> favorContact(long contactId) {
         return apiService.favorContact(contactId)
                 .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during favorContact", throwable))
@@ -239,9 +239,9 @@ public final class OutfieldAPI {
      * Add an organization's contact to the current user's “my contacts” list,
      * while simultaneously updating the contact.
      * @param contact Contact object to be favored and updated.
-     * @return {@link Single} containing the favored contact or null on failure.
+     * @return {@link Observable} containing the favored contact or null on failure.
      */
-    public static Single<Contact> updateAndFavorContact(Contact contact) {
+    public static Observable<Contact> updateAndFavorContact(Contact contact) {
         return apiService.updateAndFavorContact(contact.wrap())
                 .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateAndFavorContact", throwable))
@@ -254,9 +254,9 @@ public final class OutfieldAPI {
      * Remove a contact from the current user's “my contacts” list, keep the contact in the
      * organization.
      * @param contact The contact to be deleted.
-     * @return {@link Single} containing the original {@link Contact} or null on failure.
+     * @return {@link Observable} containing the original {@link Contact} or null on failure.
      */
-    public static Single<Contact> unfavorContact(Contact contact) {
+    public static Observable<Contact> unfavorContact(Contact contact) {
         return apiService.unfavorContact(contact.getId())
                 .map(response -> (response.isSuccessful() || response.code() == 404) ? contact : null)
                 .doOnError(throwable -> Log.e(TAG, "Error during unfavorContact", throwable))
@@ -270,9 +270,9 @@ public final class OutfieldAPI {
      * This method should not be used if the contact already has an ID. If the contact has an ID,
      * it already exists on the server and should be updated using {@link #updateContact}.
      * @param contact The contact to be uploaded.
-     * @return {@link Single} containing the created contact or null on failure.
+     * @return {@link Observable} containing the created contact or null on failure.
      */
-    public static Single<Contact> createContact(Contact contact) {
+    public static Observable<Contact> createContact(Contact contact) {
         return apiService.createContact(contact.wrap())
                 .doOnError(throwable -> Log.e(TAG, "Error during createContact", throwable))
                 .map(Contact.Wrapper::getContact);
@@ -286,9 +286,9 @@ public final class OutfieldAPI {
      * not have an ID, it doesn't exist on the server yet, and needs to be created using
      * {@link #createContact}.
      * @param contact The contact to be updated.
-     * @return {@link Single} containing the updated contact or null on failure.
+     * @return {@link Observable} containing the updated contact or null on failure.
      */
-    public static Single<Contact> updateContact(Contact contact) {
+    public static Observable<Contact> updateContact(Contact contact) {
         return apiService.updateContact(contact.getId(), contact.wrap())
                 .map(Contact.Wrapper::getContact)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateContact", throwable))
@@ -302,9 +302,9 @@ public final class OutfieldAPI {
      * contacts that already have an ID. If the contact does not have an ID, it doesn't
      * exist on the server yet and only needs to be deleted locally.
      * @param contact Contact to be deleted.
-     * @return {@link Single} containing the original contact or null on failure.
+     * @return {@link Observable} containing the original contact or null on failure.
      */
-    public static Single<Contact> deleteContact(Contact contact) {
+    public static Observable<Contact> deleteContact(Contact contact) {
         return apiService.deleteContact(contact.getId())
                 .map(response -> (response.isSuccessful() || response.code() == 404) ? contact : null)
                 .doOnError(throwable -> Log.e(TAG, "Error during deleteContact", throwable))
@@ -325,9 +325,9 @@ public final class OutfieldAPI {
      * @param perPage The number of interactions to retrieve per page. Defaults to 25 if null.
      * @param interactionType Only retrieve interactions of a particular type. (optional)
      * @param search Search interactions for provided text. (optional)
-     * @return {@link Single} containing the {@link InteractionsResponse} object or null on failure.
+     * @return {@link Observable} containing the {@link InteractionsResponse} object or null on failure.
      */
-    public static Single<InteractionsResponse> getInteractions(boolean onlyMe, Integer page,
+    public static Observable<InteractionsResponse> getInteractions(boolean onlyMe, Integer page,
                                                                Integer perPage,
                                                                Interaction.Type interactionType,
                                                                String search) {
@@ -345,9 +345,9 @@ public final class OutfieldAPI {
      * <p>
      * Attempts to retrieve interaction with provided ID.
      * @param interactionId API ID of interaction to be retrieved.
-     * @return {@link Single} containing the retrieved {@link Interaction} or null on failure.
+     * @return {@link Observable} containing the retrieved {@link Interaction} or null on failure.
      */
-    public static Single<Interaction> getInteraction(long interactionId) {
+    public static Observable<Interaction> getInteraction(long interactionId) {
         return apiService.getInteraction(interactionId)
                 .map(Interaction.Wrapper::getInteraction)
                 .doOnError(throwable -> Log.e(TAG, "Error during getInteraction", throwable))
@@ -362,9 +362,9 @@ public final class OutfieldAPI {
      * an ID, it already exists on the server and should be updated using
      * {@link #updateInteraction}.
      * @param interaction The interaction to be uploaded.
-     * @return {@link Single} containing the created {@link Interaction} or null on failure.
+     * @return {@link Observable} containing the created {@link Interaction} or null on failure.
      */
-    public static Single<Interaction> createInteraction(Interaction interaction) {
+    public static Observable<Interaction> createInteraction(Interaction interaction) {
         return apiService.createInteraction(interaction.wrap())
                 .map(Interaction.Wrapper::getInteraction)
                 .doOnError(throwable -> Log.e(TAG, "Error during createInteraction", throwable))
@@ -379,9 +379,9 @@ public final class OutfieldAPI {
      * If the interaction does not have an ID, it doesn't exist on the server yet, and needs to be
      * created using {@link #createInteraction}.
      * @param interaction The interaction to be updated.
-     * @return {@link Single} containing the created {@link Interaction} or null on failure.
+     * @return {@link Observable} containing the created {@link Interaction} or null on failure.
      */
-    public static Single<Interaction> updateInteraction(Interaction interaction) {
+    public static Observable<Interaction> updateInteraction(Interaction interaction) {
         return apiService.updateInteraction(interaction.getId(), interaction.wrap())
                 .map(Interaction.Wrapper::getInteraction)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateInteraction", throwable))
@@ -395,9 +395,9 @@ public final class OutfieldAPI {
      * interactions that already have an ID. If the interaction does not have an ID, it doesn't
      * exist on the server yet and only needs to be deleted locally.
      * @param interaction Interaction to be deleted.
-     * @return {@link Single} containing the original {@link Interaction} or null on failure.
+     * @return {@link Observable} containing the original {@link Interaction} or null on failure.
      */
-    public static Single<Interaction> deleteInteraction(Interaction interaction) {
+    public static Observable<Interaction> deleteInteraction(Interaction interaction) {
         return apiService.deleteInteraction(interaction.getId())
                 .map(response -> (response.isSuccessful() || response.code() == 404) ? interaction : null)
                 .doOnError(throwable -> Log.e(TAG, "Error during deleteInteraction", throwable))
@@ -419,9 +419,9 @@ public final class OutfieldAPI {
      * comments that do not have an ID. If the comment has an ID, it already exists on the server
      * and should be updated using {@link #updateComment}.
      * @param comment The {@link Comment} to be uploaded.
-     * @return {@link Single} containing the created {@link Comment} or null on failure.
+     * @return {@link Observable} containing the created {@link Comment} or null on failure.
      */
-    public static Single<Comment> createComment(Comment comment) {
+    public static Observable<Comment> createComment(Comment comment) {
         return apiService.createComment(comment.getInteractionId(), comment.wrap())
                 .map(Comment.Wrapper::getComment)
                 .doOnError(throwable -> Log.e(TAG, "Error during createComment", throwable))
@@ -435,9 +435,9 @@ public final class OutfieldAPI {
      * If the comment does not have an ID, it does not exist on the server yet and should be created
      * using {@link #createComment}.
      * @param comment The {@link Comment} to be updated.
-     * @return {@link Single} containing the updated {@link Comment} or null on failure.
+     * @return {@link Observable} containing the updated {@link Comment} or null on failure.
      */
-    public static Single<Comment> updateComment(Comment comment) {
+    public static Observable<Comment> updateComment(Comment comment) {
         return apiService.updateComment(comment.getId(), comment.wrap())
                 .map(Comment.Wrapper::getComment)
                 .doOnError(throwable -> Log.e(TAG, "Error during updateComment", throwable))
@@ -451,9 +451,9 @@ public final class OutfieldAPI {
      * If the comment does not have an ID, it does not exist on the server yet and only needs to be
      * deleted locally.
      * @param comment The {@link Comment} to be deleted.
-     * @return {@link Single} containing the original {@link Comment} or null on failure.
+     * @return {@link Observable} containing the original {@link Comment} or null on failure.
      */
-    public static Single<Comment> deleteComment(Comment comment) {
+    public static Observable<Comment> deleteComment(Comment comment) {
         return apiService.deleteComment(comment.getId())
                 .map(response -> (response.isSuccessful() || response.code() == 404) ? comment : null)
                 .doOnError(throwable -> Log.e(TAG, "Error during deleteComment", throwable))
@@ -468,9 +468,9 @@ public final class OutfieldAPI {
      * <code>GET /api/v2/forms</code>
      * <p>
      * Retrieves all current interaction forms.
-     * @return {@link Single} containing current {@link Form Forms} or null on failure.
+     * @return {@link Observable} containing current {@link Form Forms} or null on failure.
      */
-    public static Single<List<Form>> getLatestForms() {
+    public static Observable<List<Form>> getLatestForms() {
         return apiService.getLatestForms()
                 .map(Form.ArrayWrapper::getForms)
                 .doOnError(throwable -> Log.e(TAG, "Error during getForms", throwable))
@@ -482,9 +482,9 @@ public final class OutfieldAPI {
      * <p>
      * Retrieves form matching specified form ID.
      * @param formId API ID of form to be retrieved.
-     * @return {@link Single} containing the retrieved {@link Form} or null on failure.
+     * @return {@link Observable} containing the retrieved {@link Form} or null on failure.
      */
-    public static Single<Form> getForm(long formId) {
+    public static Observable<Form> getForm(long formId) {
         return apiService.getForm(formId)
                 .map(Form.Wrapper::getForm)
                 .doOnError(throwable -> Log.e(TAG, "Error during getForm", throwable))
@@ -501,7 +501,7 @@ public final class OutfieldAPI {
      * Retrieves latest page of notifications for user
      * @return Latest page of {@link Notification Notifications} for the user or null on failure.
      */
-    public static Single<List<Notification>> getNotifications() {
+    public static Observable<List<Notification>> getNotifications() {
         return apiService.getNotifications()
                 .map(Notification.ArrayWrapper::getNotifications)
                 .doOnError(throwable -> Log.e(TAG, "Error during getNotifications", throwable))
@@ -519,9 +519,9 @@ public final class OutfieldAPI {
      * @param onlyMe When false, gets interactions by all team members. Defaults to false if null.
      * @param perSync The number of items to retrieve per page. Defaults to 50 if null.
      * @param syncToken Where to begin syncing. If null, will sync from beginning of time.
-     * @return {@link Single} containing the {@link SyncResponse} or null on failure.
+     * @return {@link Observable} containing the {@link SyncResponse} or null on failure.
      */
-    public static Single<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
+    public static Observable<SyncResponse> sync(Boolean onlyMe, Integer perSync, String syncToken) {
 
         // Set default params
         if (onlyMe == null) onlyMe = false;

@@ -15,7 +15,6 @@ import com.outfieldapp.outfieldbackend.models.Phone;
 import java.util.ArrayList;
 import java.util.List;
 
-import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -27,15 +26,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.progressBar).setEnabled(true);
-//        OutfieldApp.getSharedPrefs().edit().clear().commit();
-//        OutfieldApp.getDatabase().clear();
+        OutfieldApp.getSharedPrefs().edit().clear().commit();
+        OutfieldApp.getDatabase().clear();
         signIn();
     }
 
     public void signIn() {
         OutfieldAPI.signIn("tim.havelka@gmail.com", "fortune1")
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .subscribe(user -> {
                     if (user != null) {
                         Log.d(TAG, "Email: " + user.getEmail() + " Token: " + user.getToken());

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 
 import rx.Observable;
-import rx.Single;
 import rx.schedulers.Schedulers;
 
 // TODO: Implement Counter class or RxJava
@@ -36,9 +35,7 @@ public class SyncController {
     private boolean isSyncing;
     private int progress;
     private int syncTotal;
-    private boolean hasTeamActivity;
     private boolean userInfoCurrent;
-    private String syncToken = "";
 
     public void doSync() {
         if (isSyncing) return;
@@ -55,7 +52,7 @@ public class SyncController {
         syncTotal = 0;
         userInfoCurrent = false;
 
-        Single.merge(
+        Observable.merge(
                 syncCurrentUser(),
                 syncForms(),
                 syncContacts(),
@@ -63,25 +60,25 @@ public class SyncController {
                 syncComments(),
                 syncNotifications()
         )
+                .doOnCompleted(this::sync)
+                .doOnError(throwable -> onSyncFinished(false))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .subscribe(success -> {
-                    SharedPreferences prefs = OutfieldApp.getSharedPrefs();
-                    String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
-                    sync(false, syncToken);
-                }, throwable -> onSyncFinished(false));
+                .subscribe();
     }
 
     /**
      * Gets up-to-date info about the current user and ensures that the user's account is active.
      */
-    private Single<Boolean> getUserDetails() {
+    private Observable<Boolean> getUserDetails() {
         return OutfieldAPI.getUserDetails()
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnSuccess(user -> {
+                .doOnNext(user -> {
                     user.save();
-                    hasTeamActivity = user.hasTeamActivity();
+                    OutfieldApp.getSharedPrefs().edit()
+                            .putBoolean(Constants.Prefs.HAS_TEAM_ACTIVITY, user.hasTeamActivity())
+                            .apply();
                     userInfoCurrent = true;
                 })
                 .map(user -> true)
@@ -91,19 +88,19 @@ public class SyncController {
     /**
      * Updates user's data on the server.
      */
-    private Single<Boolean> syncCurrentUser() {
+    private Observable<Boolean> syncCurrentUser() {
         final User currentUser = User.getCurrentUser();
-        if (currentUser == null || !currentUser.isDirty()) return Single.just(false);
+        if (currentUser == null || !currentUser.isDirty()) return Observable.just(false);
         return OutfieldAPI.updateUser(currentUser)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnSuccess(user -> {
-                    if (user != null) {
-                        user.setDirty(false);
-                        user.setImage(currentUser.getImage());
-                        user.save();
-                        Log.d(TAG, "Updated user on server.");
-                    }
+                .doOnNext(user -> {
+                    if (user == null) return;
+                    Log.d(TAG, "Updated user on server.");
+                    user.setDirty(false);
+                    user.setImage(currentUser.getImage());
+                    user.save();
+                    syncUserImage();
                 })
                 .map(user -> true)
                 .onErrorReturn(throwable -> false);
@@ -112,7 +109,7 @@ public class SyncController {
     /**
      * Updates users image on the server. Should only be called after {@link #syncCurrentUser()}.
      */
-    private Single<Boolean> syncUserImage() {
+    private Observable<Boolean> syncUserImage() {
         // TODO: syncUserImage
         return null;
     }
@@ -120,7 +117,7 @@ public class SyncController {
     /**
      * Sends local contact changes to server and updates local contacts with response data.
      */
-    private Single<Boolean> syncContacts() {
+    private Observable<Boolean> syncContacts() {
         List<Contact> deletedContacts = new ArrayList<>();
         List<Contact> createdContacts = new ArrayList<>();
         List<Contact> updatedContacts = new ArrayList<>();
@@ -154,12 +151,11 @@ public class SyncController {
 
         // Sync deleted contacts
         Observable<Contact> delete = Observable.from(deletedContacts)
-                .flatMap(contact -> OutfieldAPI.deleteContact(contact).toObservable())
+                .flatMap(OutfieldAPI::deleteContact)
                 .doOnNext(contact -> {
-                    if (contact != null) {
-                        Log.d(TAG, "Deleted contact from server");
-                        contact.delete();
-                    }
+                    if (contact == null) return;
+                    Log.d(TAG, "Deleted contact from server");
+                    contact.delete();
                 });
 
         // Favor and update contacts
@@ -168,30 +164,28 @@ public class SyncController {
                     if (contact.getContactType() == Contact.Type.PLACE) {
                         contact.setImages(new ArrayList<>());
                     }
-                    return OutfieldAPI.updateAndFavorContact(contact).toObservable();
+                    return OutfieldAPI.updateAndFavorContact(contact);
                 })
                 .doOnNext(returnedContact -> {
-                    if (returnedContact != null) {
-                        Log.d(TAG, "Favored and updated contact on server");
-                        returnedContact.setDirty(false);
-                        returnedContact.save();
-                    }
+                    if (returnedContact == null) return;
+                    Log.d(TAG, "Favored and updated contact on server");
+                    returnedContact.setDirty(false);
+                    returnedContact.save();
                 });
 
         // Sync created contacts
         Observable<Contact> create = Observable.from(createdContacts)
                 .flatMap(contact -> {
                     contact.setId(0);
-                    return OutfieldAPI.createContact(contact).toObservable()
+                    return OutfieldAPI.createContact(contact)
                             .doOnNext(returnedContact -> {
-                                if (returnedContact != null) {
-                                    Log.d(TAG, "Created contact on server");
-                                    contact.setId(returnedContact.getId());
-                                    contact.update();
-                                    returnedContact.setImages(contact.getImages());
-                                    returnedContact.setDirty(false);
-                                    returnedContact.save();
-                                }
+                                if (returnedContact == null) return;
+                                Log.d(TAG, "Created contact on server");
+                                contact.setId(returnedContact.getId());
+                                contact.update();
+                                returnedContact.setImages(contact.getImages());
+                                returnedContact.setDirty(false);
+                                returnedContact.save();
                             });
                 });
 
@@ -201,30 +195,28 @@ public class SyncController {
                     if (contact.getContactType() == Contact.Type.PLACE) {
                         contact.setImages(new ArrayList<>());
                     }
-                    return OutfieldAPI.updateContact(contact).toObservable();
+                    return OutfieldAPI.updateContact(contact);
                 })
                 .doOnNext(returnedContact -> {
+                    if (returnedContact == null) return;
                     Log.d(TAG, "Updated contact on server");
                     returnedContact.setDirty(false);
                     returnedContact.save();
                 });
 
         // Merge observables into single and return
-        return Single.create(singleSubscriber ->
-                Observable.merge(delete, favor, create, update)
+        return Observable.merge(delete, favor, create, update)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnCompleted(() -> {
-                    syncContactImages();
-                    singleSubscriber.onSuccess(true);
-                })
-                .subscribe());
+                .map(contact -> true)
+                .onErrorReturn(throwable -> false)
+                .doOnCompleted(this::syncContactImages);
     }
 
     /**
      * Sends local interaction changes to server and updates local interactions with response data.
      */
-    private Single<Boolean> syncInteractions() {
+    private Observable<Boolean> syncInteractions() {
         List<Interaction> deletedInteractions = new ArrayList<>();
         List<Interaction> createdInteractions = new ArrayList<>();
         List<Interaction> updatedInteractions = new ArrayList<>();
@@ -256,36 +248,35 @@ public class SyncController {
 
         // Sync deleted interactions
         Observable<Interaction> delete = Observable.from(deletedInteractions)
-                .flatMap(interaction -> OutfieldAPI.deleteInteraction(interaction).toObservable())
+                .flatMap(OutfieldAPI::deleteInteraction)
                 .doOnNext(interaction -> {
-                    if (interaction != null) {
-                        Log.d(TAG, "Deleted interaction on server.");
-                        interaction.delete();
-                    }
+                    if (interaction == null) return;
+                    Log.d(TAG, "Deleted interaction on server.");
+                    interaction.delete();
                 });
 
         // Sync created interactions
         Observable<Interaction> create = Observable.from(createdInteractions)
                 .flatMap(interaction -> {
                     interaction.setId(0);
-                    return OutfieldAPI.createInteraction(interaction).toObservable()
+                    return OutfieldAPI.createInteraction(interaction)
                             .doOnNext(returnedInteraction -> {
-                                if (returnedInteraction != null) {
-                                    Log.d(TAG, "Created interaction on server");
-                                    interaction.setId(returnedInteraction.getId());
-                                    interaction.update();
-                                    returnedInteraction.setImages(interaction.getImages());
-                                    returnedInteraction.setComments(interaction.getComments());
-                                    returnedInteraction.setDirty(false);
-                                    returnedInteraction.save();
-                                }
+                                if (returnedInteraction == null) return;
+                                Log.d(TAG, "Created interaction on server");
+                                interaction.setId(returnedInteraction.getId());
+                                interaction.update();
+                                returnedInteraction.setImages(interaction.getImages());
+                                returnedInteraction.setComments(interaction.getComments());
+                                returnedInteraction.setDirty(false);
+                                returnedInteraction.save();
                             });
                 });
 
         // Sync updated interactions
         Observable<Interaction> update = Observable.from(updatedInteractions)
-                .flatMap(interaction -> OutfieldAPI.updateInteraction(interaction).toObservable()
+                .flatMap(interaction -> OutfieldAPI.updateInteraction(interaction)
                         .doOnNext(returnedInteraction -> {
+                            if (returnedInteraction == null) return;
                             Log.d(TAG, "Updated interaction on server");
                             returnedInteraction.setComments(interaction.getComments());
                             returnedInteraction.setImages(interaction.getImages());
@@ -294,26 +285,28 @@ public class SyncController {
                         }));
 
         // Merge observables into single and return
-        return Single.create(singleSubscriber ->
-                Observable.merge(delete, create, update)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .doOnCompleted(() -> {
-                            syncInteractionImages();
-                            singleSubscriber.onSuccess(true);
-                        })
-                        .subscribe());
+        return Observable.merge(delete, create, update)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(interaction -> true)
+                .onErrorReturn(throwable -> false)
+                .doOnCompleted(this::syncInteractionImages);
     }
 
+    // TODO: syncContactImages
     private void syncContactImages() {
         Log.d(TAG, "SYNC CONTACT IMAGES");
     }
 
+    // TODO: syncInteractionImages
     private void syncInteractionImages() {
         Log.d(TAG, "SYNC INTERACTION IMAGES");
     }
 
-    private Single<Boolean> syncComments() {
+    /**
+     * Sends local comment changes to the server and updates database rows with response data.
+     */
+    private Observable<Boolean> syncComments() {
         List<Comment> deletedComments = new ArrayList<>();
         List<Comment> createdComments = new ArrayList<>();
         List<Comment> updatedComments = new ArrayList<>();
@@ -345,32 +338,31 @@ public class SyncController {
 
         // Sync deleted comments
         Observable<Comment> delete = Observable.from(deletedComments)
-                .flatMap(comment -> OutfieldAPI.deleteComment(comment).toObservable())
+                .flatMap(OutfieldAPI::deleteComment)
                 .doOnNext(comment -> {
-                    if (comment != null) {
-                        Log.d(TAG, "Deleted comment on server.");
-                        comment.delete();
-                    }
+                    if (comment == null) return;
+                    Log.d(TAG, "Deleted comment on server.");
+                    comment.delete();
                 });
 
         // Sync created comments
         Observable<Comment> create = Observable.from(createdComments)
-                .flatMap(comment -> OutfieldAPI.createComment(comment).toObservable()
+                .flatMap(comment -> OutfieldAPI.createComment(comment)
                         .doOnNext(returnedComment -> {
-                            if (returnedComment != null) {
-                                Log.d(TAG, "Created comment on server");
-                                comment.setId(returnedComment.getId());
-                                comment.update();
-                                returnedComment.setInteractionId(comment.getInteractionId());
-                                returnedComment.setDirty(false);
-                                returnedComment.save();
-                            }
+                            if (returnedComment == null) return;
+                            Log.d(TAG, "Created comment on server");
+                            comment.setId(returnedComment.getId());
+                            comment.update();
+                            returnedComment.setInteractionId(comment.getInteractionId());
+                            returnedComment.setDirty(false);
+                            returnedComment.save();
                         }));
 
         // Sync updated comments
         Observable<Comment> update = Observable.from(updatedComments)
-                .flatMap(comment -> OutfieldAPI.updateComment(comment).toObservable()
+                .flatMap(comment -> OutfieldAPI.updateComment(comment)
                         .doOnNext(returnedComment -> {
+                            if (returnedComment == null) return;
                             Log.d(TAG, "Updated comment on server");
                             returnedComment.setInteractionId(comment.getInteractionId());
                             returnedComment.setDirty(false);
@@ -378,19 +370,21 @@ public class SyncController {
                         }));
 
         // Merge observables into single and return
-        return Single.create(singleSubscriber ->
-                Observable.merge(delete, create, update)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .doOnCompleted(() -> singleSubscriber.onSuccess(true))
-                        .subscribe());
+        return Observable.merge(delete, create, update)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .map(comment -> true)
+                .onErrorReturn(throwable -> false);
     }
 
-    private Single<Boolean> syncNotifications() {
+    /**
+     * Retrieves and inserts the 20 most recent notifications from the server
+     */
+    private Observable<Boolean> syncNotifications() {
         return OutfieldAPI.getNotifications()
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnSuccess(notifications -> {
+                .doOnNext(notifications -> {
                     if (notifications == null) return;
                     for (Notification notification : notifications) {
                         notification.save();
@@ -403,21 +397,20 @@ public class SyncController {
     /**
      * Retrieves and inserts organization's current interaction forms.
      */
-    private Single<Boolean> syncForms() {
+    private Observable<Boolean> syncForms() {
         Set<String> currentFormIds = new HashSet<>();
         return OutfieldAPI.getLatestForms()
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnSuccess(forms -> {
-                    if (forms != null) {
-                        for (Form form : forms) {
-                            currentFormIds.add(String.valueOf(form.getId()));
-                            form.save();
-                        }
-                        SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
-                        editor.putStringSet(Constants.Prefs.CURRENT_FORM_IDS, currentFormIds);
-                        editor.apply();
+                .doOnNext(forms -> {
+                    if (forms == null) return;
+                    for (Form form : forms) {
+                        currentFormIds.add(String.valueOf(form.getId()));
+                        form.save();
                     }
+                    SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
+                    editor.putStringSet(Constants.Prefs.CURRENT_FORM_IDS, currentFormIds);
+                    editor.apply();
                 })
                 .map(forms -> true)
                 .onErrorReturn(throwable -> false);
@@ -425,26 +418,23 @@ public class SyncController {
 
     /**
      * Gets contact and interaction changes for favored contacts from server.
-     * @param onlyMe If false, retrieves interactions by all team members for favored contact.
-     * @param syncToken When to begin syncing from. If null, will sync from beginning of time.
      */
-    private Single<Boolean> sync(final Boolean onlyMe, final String syncToken) {
-
-        final String oldToken = this.syncToken;
-        this.syncToken = syncToken;
-        return OutfieldAPI.sync(onlyMe, 50, syncToken)
+    private void sync() {
+        SharedPreferences prefs = OutfieldApp.getSharedPrefs();
+        final String syncToken = prefs.getString(Constants.Headers.SYNC_TOKEN, null);
+        OutfieldAPI.sync(false, 50, syncToken)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .doOnSuccess(syncResponse -> {
+                .doOnNext(syncResponse -> {
                     // Save new sync token
                     String newToken = syncResponse.getToken();
                     SharedPreferences.Editor editor = OutfieldApp.getSharedPrefs().edit();
                     editor.putString(Constants.Headers.SYNC_TOKEN, newToken);
-                    editor.apply();
+                    editor.commit();
 
                     // If not finished, call sync again
                     if (syncResponse.getStatus().equals("more")) {
-                        sync(onlyMe, newToken);
+                        sync();
                     }
 
                     // Get changes from response
@@ -504,11 +494,11 @@ public class SyncController {
                     }
                 })
                 .doOnError(throwable -> {
-                    setSyncToken(oldToken);
                     onSyncFinished(false);
                 })
                 .map(syncResponse -> true)
-                .onErrorReturn(throwable -> false);
+                .onErrorReturn(throwable -> false)
+                .subscribe();
     }
 
     /**
@@ -523,9 +513,5 @@ public class SyncController {
 
     private void reset() {
 
-    }
-
-    private void setSyncToken(String token) {
-        syncToken = token;
     }
 }

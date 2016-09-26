@@ -29,7 +29,7 @@ import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
-import rx.Single;
+import rx.Observable;
 
 /**
  * Provides type-safe interface for building HTTP requests.
@@ -97,18 +97,18 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.ME)
-    Single<User.Wrapper> getUserDetails();
+    Observable<User.Wrapper> getUserDetails();
 
     @GET(Constants.Endpoints.ACCOUNT_EXISTS)
-    Single<User.Wrapper> checkAccountExists(@Query(Params.AccountExists.EMAIL) String email);
+    Observable<User.Wrapper> checkAccountExists(@Query(Params.AccountExists.EMAIL) String email);
 
     @POST(Endpoints.SIGN_IN)
-    Single<User.Wrapper> signIn(
+    Observable<User.Wrapper> signIn(
             @Query(Params.SignIn.EMAIL) String email,
             @Query(Params.SignIn.PASSWORD) String password);
 
     @POST(Endpoints.SIGN_UP)
-    Single<User.Wrapper> signUp(
+    Observable<User.Wrapper> signUp(
             @Query(Params.SignUp.EMAIL) String email,
             @Query(Params.SignUp.NAME) String name,
             @Query(Params.SignUp.PASSWORD) String password,
@@ -117,10 +117,10 @@ public interface ApiService {
     );
 
     @PUT(Endpoints.ME)
-    Single<User.Wrapper> updateUser(@Body User.Wrapper user);
+    Observable<User.Wrapper> updateUser(@Body User.Wrapper user);
 
     @POST(Endpoints.PASSWORD_RESET)
-    Single<Void> resetPassword(@Query(Params.PasswordReset.EMAIL) String email);
+    Observable<Void> resetPassword(@Query(Params.PasswordReset.EMAIL) String email);
 
     // TODO: Upload user image
 
@@ -130,7 +130,7 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.MY_CONTACTS)
-    Single<ContactsResponse> getPlaces(
+    Observable<ContactsResponse> getPlaces(
             @Query(Params.Contacts.CONTACT_TYPE) String contactType,
             @Query(Params.Contacts.SEARCH) String search,
             @Query(Params.Contacts.PER_PAGE) Integer perPage,
@@ -141,7 +141,7 @@ public interface ApiService {
     );
 
     @GET(Endpoints.CONTACTS)
-    Single<ContactsResponse> getPeople(
+    Observable<ContactsResponse> getPeople(
             @Query(Params.Contacts.CONTACT_TYPE) String contactType,
             @Query(Params.Contacts.SEARCH) String search,
             @Query(Params.Contacts.PER_PAGE) Integer perPage,
@@ -150,44 +150,44 @@ public interface ApiService {
     );
 
     @GET(Endpoints.CONTACTS + "/{id}")
-    Single<Contact.Wrapper> getContact(
+    Observable<Contact.Wrapper> getContact(
             @Path("id") Long id
     );
 
     @GET(Endpoints.EXPLORE)
-    Single<ContactsResponse> explore(
+    Observable<ContactsResponse> explore(
             @Query(Params.Explore.LOCATION) String location,
             @Query(Params.Explore.QUERY) String search
     );
 
     @POST(Endpoints.MY_CONTACTS)
-    Single<Contact.Wrapper> favorContact(
+    Observable<Contact.Wrapper> favorContact(
             @Query(Params.Contacts.CONTACT_ID) long contactId
     );
 
     @POST(Endpoints.MY_CONTACTS)
-    Single<Contact.Wrapper> updateAndFavorContact(
+    Observable<Contact.Wrapper> updateAndFavorContact(
             @Body Contact.Wrapper contact
     );
 
     @POST(Endpoints.CONTACTS)
-    Single<Contact.Wrapper> createContact(
+    Observable<Contact.Wrapper> createContact(
             @Body Contact.Wrapper contact
     );
 
     @PUT(Endpoints.CONTACTS + "/{id}")
-    Single<Contact.Wrapper> updateContact(
+    Observable<Contact.Wrapper> updateContact(
             @Path("id") long id,
             @Body Contact.Wrapper contact
     );
 
     @DELETE(Endpoints.MY_CONTACTS + "/{id}")
-    Single<Response<Void>> unfavorContact(
+    Observable<Response<Void>> unfavorContact(
             @Path("id") long id
     );
 
     @DELETE(Endpoints.CONTACTS + "/{id}")
-    Single<Response<Void>> deleteContact(
+    Observable<Response<Void>> deleteContact(
             @Path("id") long id
     );
 
@@ -198,7 +198,7 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.INTERACTIONS)
-    Single<InteractionsResponse> getInteractions(
+    Observable<InteractionsResponse> getInteractions(
             @Query(Params.Interactions.ONLY_ME) boolean onlyMe,
             @Query(Params.Interactions.PAGE) Integer page,
             @Query(Params.Interactions.PER_PAGE) Integer perPage,
@@ -207,23 +207,23 @@ public interface ApiService {
     );
 
     @GET(Endpoints.INTERACTIONS + "/{id}")
-    Single<Interaction.Wrapper> getInteraction(
+    Observable<Interaction.Wrapper> getInteraction(
             @Path("id") long id
     );
 
     @POST(Endpoints.INTERACTIONS)
-    Single<Interaction.Wrapper> createInteraction(
+    Observable<Interaction.Wrapper> createInteraction(
             @Body Interaction.Wrapper interaction
     );
 
     @PUT(Endpoints.INTERACTIONS + "/{id}")
-    Single<Interaction.Wrapper> updateInteraction(
+    Observable<Interaction.Wrapper> updateInteraction(
             @Path("id") long id,
             @Body Interaction.Wrapper interaction
     );
 
     @DELETE(Endpoints.INTERACTIONS + "/{id}")
-    Single<Response<Void>> deleteInteraction(
+    Observable<Response<Void>> deleteInteraction(
             @Path("id") long id
     );
 
@@ -236,19 +236,19 @@ public interface ApiService {
     //#############################################################################################
 
     @POST(Endpoints.INTERACTIONS + "/{id}/comments")
-    Single<Comment.Wrapper> createComment(
+    Observable<Comment.Wrapper> createComment(
             @Path("id") long interactionId,
             @Body Comment.Wrapper comment
     );
 
     @PUT(Endpoints.COMMENTS + "/{id}")
-    Single<Comment.Wrapper> updateComment(
+    Observable<Comment.Wrapper> updateComment(
             @Path("id") long commentId,
             @Body Comment.Wrapper comment
     );
 
     @DELETE(Endpoints.COMMENTS + "/{id}")
-    Single<Response<Void>> deleteComment(
+    Observable<Response<Void>> deleteComment(
             @Path("id") long commentId
     );
 
@@ -257,10 +257,10 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.FORMS)
-    Single<Form.ArrayWrapper> getLatestForms();
+    Observable<Form.ArrayWrapper> getLatestForms();
 
     @GET(Endpoints.FORMS + "/{id}")
-    Single<Form.Wrapper> getForm(
+    Observable<Form.Wrapper> getForm(
             @Path("id") long formId
     );
 
@@ -269,14 +269,14 @@ public interface ApiService {
     //#############################################################################################
 
     @GET(Endpoints.NOTIFICATIONS)
-    Single<Notification.ArrayWrapper> getNotifications();
+    Observable<Notification.ArrayWrapper> getNotifications();
 
     //#############################################################################################
     //                                       SYNC REQUESTS
     //#############################################################################################
 
     @GET(Endpoints.SYNC)
-    Single<Response<SyncResponse>> sync(
+    Observable<Response<SyncResponse>> sync(
             @Query(Params.Sync.ONLY_ME) Boolean onlyMe,
             @Query(Params.Sync.PER_SYNC) Integer perSync,
             @Query(Params.Sync.SYNC_TOKEN) String syncToken
